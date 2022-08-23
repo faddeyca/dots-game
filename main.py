@@ -1,8 +1,9 @@
 import pygame
+import sys
 
 from colors import *
 
-moves8 = [[1, 0], [0, 1], [-1, 0], [0, -1], [1, 1], [-1, 1], [-1, 1], [1, -1]]
+moves8 = [[-1, -1], [-1, 0], [-1, 1], [0, -1], [0, 1], [1, -1], [1, 0], [1, 1]]
 
 class Game:
     def __init__(self):
@@ -76,16 +77,53 @@ class Game:
             return -1
         return x, y
 
-    def dfs(self, pos):
-        x = pos[0]
-        y = pos[1]
+    def dfs(self, pos, dic, path, prev):
+        filled = []
+        if prev != -1:
+            for dx, dy in moves8:
+                npos = prev[0] + dx, prev[1] + dy
+                if npos in dic and dic[npos] == 0:
+                    filled.append(npos)
+                    dic[npos] = 1
         for dx, dy in moves8:
-            npos = x + dx, y + dy
-            if npos in self.dots[self.turn]:
-                pass
+            npos = pos[0] + dx, pos[1] + dy
+            if npos in dic:
+                if dic[npos] == 1 or npos == prev or dic[npos] == 2:
+                    continue
+                if dic[pos] == 3:
+                    if dic[npos] == 0:
+                        dic[npos] = 1
+                        npath = path.copy()
+                        npath.append(npos)
+                        self.dfs(npos, dic, npath, pos)
+                        dic[npos] = 0
+                else:
+                    if dic[npos] == 3 and dic[pos] != 3 and dic[pos] != 2:
+                        npath = path.copy()
+                        npath.append(npos)
+                        if len(npath) > 3:
+                            self.paths += [npath]
+                    else:
+                        prev = dic[npos]
+                        dic[npos] = 1
+                        npath = path.copy()
+                        npath.append(npos)
+                        self.dfs(npos, dic, npath, pos)
+                        dic[npos] = prev
+        for dot in filled:
+            dic[dot] = 0
 
     def handle_put(self, pos):
-        self.dfs(pos)
+        self.paths = []
+        dic = dict()
+        for dot in self.dots[self.turn]:
+            dic[dot] = 0
+        for dx, dy in moves8:
+            npos = pos[0] + dx, pos[1] + dy
+            if npos in dic:
+                dic[npos] = 3
+        dic[pos] = 2
+        self.dfs(pos, dic, [pos], -1)
 
     def put_dot(self, pos):
         if pos in self.dots[0] or pos in self.dots[1]:
@@ -96,6 +134,8 @@ class Game:
             self.last = pos
 
             self.handle_put(pos)
+
+            paths = self.paths
 
             self.turn = 1
         else:
@@ -124,9 +164,12 @@ class Game:
     def start(self):
         pygame.init()
         while 1:
-            ev = pygame.event.get()
+            events = pygame.event.get()
 
-            for event in ev:
+            for event in events:
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+                    sys.exit()
                 if event.type == pygame.MOUSEBUTTONUP:
                     pos = self.get_mouse_pos(pygame.mouse.get_pos())
                     if pos == -1:
