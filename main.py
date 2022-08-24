@@ -4,6 +4,7 @@ import sys
 from colors import *
 
 
+moves8 = [[-1, -1], [-1, 0], [-1, 1], [0, -1], [0, 1], [1, -1], [1, 0], [1, 1]]
 moves4x = [[-1, -1], [-1, 1], [1, -1], [1, 1]]
 moves4 = [[-1, 0], [0, -1], [0, 1], [1, 0]]
 
@@ -123,22 +124,22 @@ class Game:
         self.components_counter[current] += 1
         return ans
 
-    def refill_components(self, current):
-        amount = self.components_counter[current]
-        for i in range(amount):
-            old = i * 2 + current
+    def refill_components(self, components):
+        for old in components:
             flag = False
             for x in range(self.linesX):
                 if flag:
                     break
                 for y in range(self.linesY):
                     if self.table[x][y] == old:
-                        new = self.get_next_component_value(current)
+                        new = self.get_next_component_value(old % 2)
                         self.fill_component((x, y), new)
                         flag = True
                         break
 
     def check(self, current):
+        if current == 91:
+            pass
         enemy = (current + 1) % 2
         component = []
         left = self.linesX
@@ -162,47 +163,67 @@ class Game:
 
         for x in range(left, right + 1):
             angry = False
+            opened = False
             for y in range(up, down + 1):
                 if self.table[x][y] < 0:
-                    angry = False
+                    if not opened:
+                        angry = False
                 elif self.table[x][y] == current:
                     if not angry:
                         return
+                    else:
+                        opened = True
                 elif self.table[x][y] % 2 == enemy:
                     angry = True
+                    opened = False
         
         for x in range(left, right + 1):
             angry = False
+            opened = False
             for y in reversed(range(up, down + 1)):
                 if self.table[x][y] < 0:
-                    angry = False
+                    if not opened:
+                        angry = False
                 elif self.table[x][y] == current:
                     if not angry:
                         return
+                    else:
+                        opened = True
                 elif self.table[x][y] % 2 == enemy:
                     angry = True
+                    opened = False
 
         for y in range(up, down + 1):
             angry = False
+            opened = False
             for x in range(left, right + 1):
                 if self.table[x][y] < 0:
-                    angry = False
+                    if not opened:
+                        angry = False
                 elif self.table[x][y] == current:
                     if not angry:
                         return
+                    else:
+                        opened = True
                 elif self.table[x][y] % 2 == enemy:
                     angry = True
+                    opened = False
         
         for y in range(up, down + 1):
             angry = False
+            opened = False
             for x in reversed(range(left, right + 1)):
                 if self.table[x][y] < 0:
-                    angry = False
+                    if not opened:
+                        angry = False
                 elif self.table[x][y] == current:
                     if not angry:
                         return
+                    else:
+                        opened = True
                 elif self.table[x][y] % 2 == enemy:
                     angry = True
+                    opened = False
         
         self.score[enemy] += len(component)
         for x, y in component:
@@ -214,14 +235,30 @@ class Game:
 
         self.table[pos[0]][pos[1]] = self.get_next_component_value(self.turn)
 
-        self.refill_components(0)
-        self.refill_components(1)
+        to_refill = set()
+        for ax, ay in moves8:
+            nx, ny = pos[0] + ax, pos[1] + ay
+            if nx < 0 or nx >= self.linesX or ny < 0 or ny >= self.linesY:
+                continue
+            if self.table[nx][ny] < 0:
+                continue
+            to_refill.add(self.table[nx][ny])
+        to_refill.add(self.table[pos[0]][pos[1]])
 
-        for i in range(self.components_counter[0]):
-            self.check(i * 2)
+        self.refill_components(to_refill)
 
-        for i in range(self.components_counter[1]):
-            self.check(i * 2 + 1)
+        to_check = set()
+        for ax, ay in moves8:
+            nx, ny = pos[0] + ax, pos[1] + ay
+            if nx < 0 or nx >= self.linesX or ny < 0 or ny >= self.linesY:
+                continue
+            if self.table[nx][ny] < 0:
+                continue
+            to_check.add(self.table[nx][ny])
+        to_check.add(self.table[pos[0]][pos[1]])
+
+        for comp in to_check:
+            self.check(comp)
 
         self.turn += 1
         self.turn %= 2
