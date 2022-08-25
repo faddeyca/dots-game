@@ -163,54 +163,54 @@ class Game:
     def check_part_two(self, current):
         x, y = self.components[current]
         enemy = (current + 1) % 2
-        angles = dict()
+        angles = []
         min_dot = None
         min_dist = None
+        min_angle = None
         for dot in self.dots[enemy]:
             angle = atan2(dot[0] - x, dot[1] - y)
             if angle not in angles:
                 dist = ((dot[0] - x) ** 2 + (dot[1] - y) ** 2) ** 0.5
-                angles[angle] = (dot, dist)
+                angles.append(((angle, dist), dot))
                 if min_dot is None:
-                    min_dot = angle
+                    min_dot = dot
                     min_dist = dist
+                    min_angle = angle
                 else:
                     if dist < min_dist:
                         min_dist = dist
-                        min_dot = angle
-            else:
-                dist = ((dot[0] - x) ** 2 + (dot[1] - y) ** 2) ** 0.5
-                if dist < angles[angle][1]:
-                    angles[angle] = (dot, dist)
-                    if dist < min_dist:
-                        min_dist = dist
-                        min_dot = angle
-
+                        min_dot = dot
+                        min_angle = angle
+        angles.sort()
         if min_dot is None:
             return -1
-        ans1 = [angles[min_dot][0]]
-        prev = min_dot
-        prev_dot = angles[min_dot][0]
-        for i in sorted(angles.keys()):
-            if i > min_dot:
-                if abs(prev - i) > pi / 2:
+        ans1 = [min_dot]
+        prev_angle = min_angle
+        prev_dot = min_dot
+        for i in angles:
+            if i[0][0] > min_angle:
+                if abs(prev_angle - i[0][0]) > pi / 2:
                     return -1
-                dot = angles[i][0]
+                dot = i[1]
                 if self.are_close(prev_dot, dot):
                     ans1.append(dot)
-                    prev = i
+                    prev_angle = i[0][0]
                     prev_dot = dot
+        newangles = []
+        for a, b in angles:
+            newangles.append(((a[0], -a[1]), b)) 
+        newangles.sort()
         ans2 = []
-        prev = min_dot
-        prev_dot = angles[min_dot][0]
-        for i in reversed(sorted(angles.keys())):
-            if i < min_dot:
-                if abs(prev - i) > pi / 2:
+        prev_angle = min_angle
+        prev_dot = min_dot
+        for i in reversed(newangles):
+            if i[0][0] < min_angle:
+                if abs(prev_angle - i[0][0]) > pi / 2:
                     return -1
-                dot = angles[i][0]
+                dot = i[1]
                 if self.are_close(prev_dot, dot):
-                    ans2.append(dot)
-                    prev = i
+                    ans1.append(dot)
+                    prev_angle = i[0][0]
                     prev_dot = dot
 
         def check_circle(ans):
