@@ -29,6 +29,7 @@ class Game:
         self.used = []
         self.components = dict()
         self.dots = [[], []]
+        self.polygons = []
 
         self.score = [0, 0]
 
@@ -52,6 +53,16 @@ class Game:
                         self.draw_dot(Color.red, x, y)
                     else:
                         self.draw_dot(Color.blue, x, y)
+        for polygon in self.polygons:
+            self.draw_polygon(polygon)
+
+    def draw_polygon(self, polygon):
+        npolygon = []
+        for dot in polygon:
+            x = self.gap + dot[0] * self.block_size
+            y = self.gap + dot[1] * self.block_size + self.up_length
+            npolygon.append((x, y))
+        pygame.draw.polygon(self.screen, Color.green, npolygon)
 
     def draw_dot(self, color, x, y):
         xc = self.gap + x * self.block_size
@@ -209,7 +220,7 @@ class Game:
                     return -1
                 dot = i[1]
                 if self.are_close(prev_dot, dot):
-                    ans1.append(dot)
+                    ans2.append(dot)
                     prev_angle = i[0][0]
                     prev_dot = dot
 
@@ -276,6 +287,8 @@ class Game:
             if comp in self.components:
                 res = self.check_part_two(comp)
                 if res != -1:
+                    self.score[self.turn] += len(res)
+                    self.polygons.append(res)
                     self.fill_component(self.components[comp], -2)
                     del self.components[comp]
 
