@@ -1,6 +1,9 @@
 from queue import Queue
 import pygame
 import sys
+from functools import reduce
+import operator
+import math
 
 from properties import Properties as p
 from drawer import draw_env
@@ -13,12 +16,13 @@ class Game:
         self.mode = mode
 
         self.turn = 0
-        self.dots = [[], [], []]
+        self.dots = [[], [], [], [], []]
         self.polygons = []
         self.score = [0, 0]
 
         self.size = [p.block_size * (self.linesX - 1) + p.gap * 2,
-                     p.up_length + p.block_size * (self.linesY - 1) + 2 * p.gap]
+                     p.up_length +
+                     p.block_size * (self.linesY - 1) + 2 * p.gap]
         self.screen = pygame.display.set_mode(self.size)
         self.timer = pygame.time.Clock()
 
@@ -48,16 +52,16 @@ class Game:
             res.append((nx, ny))
         return res
 
-    def bfs(self, table, x, y):
+    def bfs(self, table, x, y, val=0):
         q = Queue()
         q.put((x, y))
         count = 1
         while count > 0:
             x, y = q.get()
             count -= 1
-            if table[x][y] == 0:
+            if table[x][y] == val:
                 continue
-            table[x][y] = 0
+            table[x][y] = val
             dots = self.get_neighbours(table, x, y)
             for dot in dots:
                 q.put(dot)
@@ -86,20 +90,59 @@ class Game:
         for y in range(self.linesY):
             if table[self.linesX - 1][y] == -1:
                 self.bfs(table, self.linesX - 1, y)
-        
+
+        to_fill = []
         enemy = (current + 1) % 2
         for x in range(self.linesX):
             for y in range(self.linesY):
                 if (x, y) in self.dots[enemy] and table[x][y] == -1:
+                    to_fill.append((x, y))
                     self.dots[enemy].remove((x, y))
-                    self.dots[2].append((x, y))
+                    self.dots[enemy + 2].append((x, y))
                     self.score[current] += 1
+        for x, y in to_fill:
+            self.bfs(table, x, y, 2)
+        p = []
+        dot = None
+        for x in range(self.linesX):
+            for y in range(self.linesY):
+                if table[x][y] == 2:
+                    self.dots[4].append((x, y))
+                    if table[x - 1][y] == 1:
+                        p.append([x - 1, y])
+                    if table[x + 1][y] == 1:
+                        p.append([x + 1, y])
+                    if table[x][y - 1] == 1:
+                        p.append([x, y - 1])
+                    if table[x][y + 1] == 1:
+                        p.append([x, y + 1])
+
+        if len(p) != 0:
+            center = tuple(
+                           map(
+                               operator.truediv,
+                               reduce
+                               (lambda x, y: map
+                                (operator.add, x, y), p), [len(p)] * 2))
+            p = sorted(p,
+                       key=lambda coord:
+                       (-135 - math.degrees
+                        (math.atan2(
+                         *tuple
+                         (map(operator.sub,
+                          coord, center))[::-1]))) % 360)
+            self.polygons.append((p, current))
 
     def put_dot(self, pos):
-        if pos in self.dots[0] or pos in self.dots[1] or pos in self.dots[2]:
+        a = pos in self.dots[0]
+        b = pos in self.dots[1]
+        c = pos in self.dots[2]
+        d = pos in self.dots[3]
+        e = pos in self.dots[4]
+        if a or b or c or d or e:
             return
         self.dots[self.turn].append(pos)
-        
+
         self.check(0)
         self.check(1)
 
@@ -153,5 +196,5 @@ class Game:
 
 
 if __name__ == "__main__":
-    game = Game(20, 20, 0)
+    game = Game(20, 20, 2)
     game.start()
