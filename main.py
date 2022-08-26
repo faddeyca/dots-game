@@ -1,4 +1,5 @@
 from math import atan2, pi
+from queue import Queue
 import pygame
 import sys
 
@@ -11,9 +12,10 @@ moves4 = [[-1, 0], [0, -1], [0, 1], [1, 0]]
 
 
 class Game:
-    def __init__(self, linesX, linesY):
+    def __init__(self, linesX, linesY, mode):
         self.linesX = linesX
         self.linesY = linesY
+        self.mode = mode
 
         self.block_size = 25
         self.up_length = 100
@@ -24,13 +26,11 @@ class Game:
         self.timer = pygame.time.Clock()
 
         self.turn = 0
-        self.table =  [[-1] * self.linesY for i in range(self.linesX)]
-        self.components_counter = [0, 0]
+        self.table =  ([[-1] * self.linesY for i in range(self.linesX)],
+                       [[-1] * self.linesY for i in range(self.linesX)])
         self.used = []
-        self.components = dict()
-        self.dots = [[], []]
+        self.dots = [[], [], []]
         self.polygons = []
-
         self.score = [0, 0]
 
     def draw_window(self):
@@ -44,15 +44,13 @@ class Game:
         for row in range(self.linesY):
             self.draw_horizontal_line(Color.black, row)
 
-        for x in range(self.linesX):
-            for y in range(self.linesY):
-                if self.table[x][y] == -2:
-                    self.draw_dot(Color.green, x, y)
-                elif self.table[x][y] != -1:
-                    if self.table[x][y] % 2 == 0:
-                        self.draw_dot(Color.red, x, y)
-                    else:
-                        self.draw_dot(Color.blue, x, y)
+        for dot in self.dots[0]:
+            self.draw_dot(Color.red, dot[0], dot[1])
+        for dot in self.dots[1]:
+            self.draw_dot(Color.blue, dot[0], dot[1])
+        for dot in self.dots[2]:
+            self.draw_dot(Color.green, dot[0], dot[1])
+
         for polygon in self.polygons:
             self.draw_polygon(polygon)
 
@@ -91,209 +89,87 @@ class Game:
         text_score_2 = courier.render(f"Score 2: {self.score[1]}", 0, Color.white)
         self.screen.blit(text_score_2, (300, 20))
 
-    def get_neighbours(self, pos):
-        x = pos[0]
-        y = pos[1]
-        current = self.table[x][y] % 2
-        enemy = (current + 1) % 2
+    def get_neighbours(self, table, x, y):
         res = []
         for ax, ay in moves4:
             nx, ny = x + ax, y + ay
             if nx < 0 or nx >= self.linesX or ny < 0 or ny >= self.linesY:
                 continue
-            if self.table[nx][ny] < 0:
-                continue
-            if self.table[nx][ny] % 2 != current:
+            if table[nx][ny] != -1:
                 continue
             res.append((nx, ny))
         for ax, ay in moves4x:
             nx, ny = x + ax, y + ay
             if nx < 0 or nx >= self.linesX or ny < 0 or ny >= self.linesY:
                 continue
-            if self.table[nx][ny] < 0:
-                continue
-            if self.table[nx][ny] % 2 != current:
+            if table[nx][ny] != -1:
                 continue
             dx = nx - x
             dy = ny - y
-            if self.table[x + dx][y] >= 0 and self.table[x][y + dy] >= 0:
-                first = self.table[x + dx][y] % 2 == enemy
-                second = self.table[x][y + dy] % 2 == enemy
-                if first and second:
-                    continue
+            first = table[x + dx][y] == 1
+            second = table[x][y + dy] == 1
+            if first and second:
+                continue
             res.append((nx, ny))
         return res
 
-    def fill_component(self, pos, val):
-        x = pos[0]
-        y = pos[1]
-        if val == -2:
-            current = self.table[x][y] % 2
-            if pos in self.dots[current]:
-                self.dots[current].remove(pos)
-        dots = self.get_neighbours(pos)
-        self.table[x][y] = val
-        for dot in dots:
-            comp = self.table[dot[0]][dot[1]]
-            if comp != val:
-                self.fill_component(dot, val)
+    def bfs(self, table, x, y):
+        q = Queue()
+        q.put((x, y))
+        count = 1
+        while count > 0:
+            x, y = q.get()
+            count -= 1
+            if table[x][y] == 0:
+                continue
+            table[x][y] = 0
+            dots = self.get_neighbours(table, x, y)
+            for dot in dots:
+                q.put(dot)
+                count += 1
 
-    def get_next_component_value(self, current):
-        ans = self.components_counter[current] * 2 + current
-        self.components_counter[current] += 1
-        return ans
+    def check(self, current):
+        table = []
+        for x in range(self.linesX):
+            line = []
+            for y in range(self.linesY):
+                line.append(self.table[current][x][y])
+            table.append(line)
 
-    def refill_components(self, components):
-        for old in components:
-            flag = False
-            for x in range(self.linesX):
-                if flag:
-                    break
-                for y in range(self.linesY):
-                    if self.table[x][y] == old:
-                        new = self.get_next_component_value(old % 2)
-                        self.components[new] = (x, y)
-                        self.fill_component((x, y), new)
-                        flag = True
-                        break
-            flag = False
-            for x in range(self.linesX):
-                if flag:
-                    break
-                for y in range(self.linesY):
-                    if self.table[x][y] == old:
-                        flag = True
-                        break
-            if not flag:
-                if old in self.components:
-                    del self.components[old]
-
-    def are_close(self, dot1, dot2):
-        return abs(dot1[0] - dot2[0]) <= 1 and abs(dot1[1] - dot2[1]) <= 1
-
-    def check_part_two(self, current):
-        x, y = self.components[current]
+        for x in range(self.linesX):
+            if table[x][0] == -1:
+                self.bfs(table, x, 0)
+        for x in range(self.linesX):
+            if table[x][self.linesY - 1] == -1:
+                self.bfs(table, x, self.linesY - 1)
+        for y in range(self.linesY):
+            if table[0][y] == -1:
+                self.bfs(table, 0, y)
+        for y in range(self.linesY):
+            if table[self.linesX - 1][y] == -1:
+                self.bfs(table, self.linesX - 1, y)
+        
         enemy = (current + 1) % 2
-        angles = []
-        min_dot = None
-        min_dist = None
-        min_angle = None
-        for dot in self.dots[enemy]:
-            angle = atan2(dot[0] - x, dot[1] - y)
-            if angle not in angles:
-                dist = ((dot[0] - x) ** 2 + (dot[1] - y) ** 2) ** 0.5
-                angles.append(((angle, dist), dot))
-                if min_dot is None:
-                    min_dot = dot
-                    min_dist = dist
-                    min_angle = angle
-                else:
-                    if dist < min_dist:
-                        min_dist = dist
-                        min_dot = dot
-                        min_angle = angle
-        angles.sort()
-        if min_dot is None:
-            return -1
-        ans1 = [min_dot]
-        prev_angle = min_angle
-        prev_dot = min_dot
-        for i in angles:
-            if i[0][0] > min_angle:
-                if abs(prev_angle - i[0][0]) > pi / 2:
-                    return -1
-                dot = i[1]
-                if self.are_close(prev_dot, dot):
-                    ans1.append(dot)
-                    prev_angle = i[0][0]
-                    prev_dot = dot
-        newangles = []
-        for a, b in angles:
-            newangles.append(((a[0], -a[1]), b)) 
-        newangles.sort()
-        ans2 = []
-        prev_angle = min_angle
-        prev_dot = min_dot
-        for i in reversed(newangles):
-            if i[0][0] < min_angle:
-                if abs(prev_angle - i[0][0]) > pi / 2:
-                    return -1
-                dot = i[1]
-                if self.are_close(prev_dot, dot):
-                    ans2.append(dot)
-                    prev_angle = i[0][0]
-                    prev_dot = dot
-
-        def check_circle(ans):
-            first = False
-            second = False
-            third = False
-            fourth = False
-            for xx, yy in ans:
-                if xx - x >= 0 and yy - y >= 0:
-                    first = True
-                if xx - x >= 0 and yy - y <= 0:
-                    second = True
-                if xx - x <= 0 and yy - y >= 0:
-                    third = True
-                if xx - x <= 0 and yy - y <= 0:
-                    fourth = True
-            return first and second and third and fourth
-
-        if len(ans2) > 0:
-            if len(ans1) + len(ans2) < 4:
-                return -1
-            while len(ans2) > 0 and not self.are_close(ans1[-1], ans2[-1]):
-                ans2.pop()
-            if len(ans2) != 0:
-                if self.are_close(ans1[-1], ans2[-1]):
-                    ans = ans1 + ans2
-                    if check_circle(ans):
-                        return ans
-                return -1
-        if len(ans1) < 4:
-            return -1
-        if self.are_close(ans1[0], ans1[-1]):
-            if check_circle(ans1):
-                return ans1
-        return -1
-            
-
+        for x in range(self.linesX):
+            for y in range(self.linesY):
+                if self.table[enemy][x][y] == 1 and table[x][y] == -1:
+                    self.dots[2].append((x, y))
+                    self.table[enemy][x][y] = -1
+                    self.score[current] += 1
 
     def put_dot(self, pos):
         if pos in self.used:
             return
-
         self.used.append(pos)
         self.dots[self.turn].append(pos)
+        self.table[self.turn][pos[0]][pos[1]] = 1
+        
+        self.check(0)
+        self.check(1)
 
-        comp = self.get_next_component_value(self.turn)
-        self.table[pos[0]][pos[1]] = comp
-        self.components[comp] = pos
-
-        to_refill = set()
-        for ax, ay in moves8:
-            nx, ny = pos[0] + ax, pos[1] + ay
-            if nx < 0 or nx >= self.linesX or ny < 0 or ny >= self.linesY:
-                continue
-            if self.table[nx][ny] < 0:
-                continue
-            to_refill.add(self.table[nx][ny])
-        to_refill.add(self.table[pos[0]][pos[1]])
-
-        self.refill_components(to_refill)
-
-        for comp in list(self.components):
-            if comp in self.components:
-                res = self.check_part_two(comp)
-                if res != -1:
-                    self.score[self.turn] += len(res)
-                    self.polygons.append(res)
-                    self.fill_component(self.components[comp], -2)
-                    del self.components[comp]
-
-        self.turn += 1
-        self.turn %= 2
+        if self.mode == 0:
+            self.turn += 1
+            self.turn %= 2
 
     def get_mouse_pos(self, pos):
         x = (pos[0] - self.gap) / self.block_size
@@ -320,17 +196,25 @@ class Game:
                 if event.type == pygame.MOUSEBUTTONUP:
                     pos = self.get_mouse_pos(pygame.mouse.get_pos())
                     if pos == -1:
-                        continue
-                    if event.button == 1:
-                        self.put_dot(pos)
+                            continue
+                    if self.mode == 0:
+                        if event.button == 1:
+                            self.put_dot(pos)
+                    if self.mode == 2:
+                        if event.button == 1:
+                            self.turn = 0
+                            self.put_dot(pos)
+                        if event.button == 3:
+                            self.turn = 1
+                            self.put_dot(pos)
 
+            self.timer.tick(60)
             self.draw_window()
             self.draw_text()
             self.draw_env()
             pygame.display.flip()
-            self.timer.tick(60)
 
 
 if __name__ == "__main__":
-    game = Game(20, 20)
+    game = Game(20, 20, 2)
     game.start()
