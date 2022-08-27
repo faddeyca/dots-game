@@ -7,14 +7,14 @@ import math
 from copy import deepcopy
 from properties import Properties as p
 from game_drawer import draw_env
-from robot import Robot
+from computer import Robot
 
 
 class Game:
     def __init__(self, linesX, linesY,
                  mode,
                  player=0, names=("Синие", "Красные"),
-                 robot=None):
+                 computer=None):
         self.linesX = linesX
         self.linesY = linesY
         self.mode = mode
@@ -30,7 +30,7 @@ class Game:
         self.prev_polygons = None
         self.prev_score = None
 
-        self.robot = robot
+        self.computer = computer
         self.names = names
         self.size = [p.block_size * (self.linesX - 1) + p.gap * 2,
                      p.up_length +
@@ -188,7 +188,7 @@ class Game:
         self.prev_score = self.score.copy()
 
     def load_prev(self):
-        if self.turn is None:
+        if self.prev_dots is None:
             return
         self.turn = self.prev_turn
         self.dots = self.prev_dots
@@ -228,7 +228,7 @@ class Game:
         amount = self.linesX * self.linesY
         if self.mode == 1:
             if self.player == 1:
-                self.put_dot((self.linesX // 2, self.linesY // 2))
+                self.put_dot((self.linesX // 2, self.linesY // 2), lock=True)
         while 1:
             count = (len(self.dots[0]) +
                      len(self.dots[1]) +
@@ -257,7 +257,7 @@ class Game:
                     if self.mode == 1:
                         if event.button == 1:
                             self.put_dot(pos)
-                            rpos = self.robot.move(pos)
+                            rpos = self.computer.move(pos)
                             if rpos != -1:
                                 self.put_dot(rpos, True)
                     if self.mode == 2:
@@ -278,10 +278,3 @@ class Game:
                      self.score,
                      self.names)
             pygame.display.flip()
-
-
-if __name__ == "__main__":
-    robot = Robot(1)
-    game = Game(20, 20, 1, 0, ("faddey", "robot"), robot)
-    robot.load_game(game)
-    game.start()

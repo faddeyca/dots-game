@@ -3,14 +3,14 @@ import pygame_menu
 import sys
 import os
 from game import Game
-from robot import Robot
+from computer import Robot
 
 
 white = (255, 255, 255)
 
 
 def input_text(input_text):
-    screen = pygame.display.set_mode([550, 75])
+    screen = pygame.display.set_mode([600, 75])
     result = ""
     while True:
         for event in pygame.event.get():
@@ -73,7 +73,7 @@ def start_game(mode):
         name = input_text("Введите имя игрока:")
         if len(name) == 0:
             name = "Игрок"
-        level = input_text("Введите сложность робота: {0 или 1}")
+        level = input_text("Введите сложность компьютера: {0 или 1}")
         try:
             level = int(level)
         except ValueError:
@@ -88,17 +88,17 @@ def start_game(mode):
         player = min(1, player)
         player = max(0, player)
         if player == 0:
-            robot = Robot(level)
-            game = Game(x, y, 1, 0, (name, "Компьютер"), robot)
-            robot.load_game(game)
+            computer = Robot(level)
+            game = Game(x, y, 1, 0, (name, "Компьютер"), computer)
+            computer.load_game(game)
             score = game.start()
             if score[0] > score[1]:
                 write_record(name, score[0], x, y)
             show_result(score, mode, 0, name_1=name)
         else:
-            robot = Robot(level)
-            game = Game(x, y, 1, 1, ("Компьютер", name), robot)
-            robot.load_game(game)
+            computer = Robot(level)
+            game = Game(x, y, 1, 1, ("Компьютер", name), computer)
+            computer.load_game(game)
             score = game.start()
             if score[1] > score[0]:
                 write_record(name, score[1], x, y)

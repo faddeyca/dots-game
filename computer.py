@@ -1,5 +1,6 @@
 import random
 from copy import deepcopy
+from properties import Properties as p
 
 
 class Robot:
@@ -95,7 +96,7 @@ class Robot:
             res = self.game.score[enemy] - currscore
             if res > 0:
                 load_prev()
-                actions.append((res, dot))
+                actions.append((res * p.defence_priority, dot))
             load_prev()
 
         currscore = self.game.score[self.game.turn]
@@ -105,7 +106,7 @@ class Robot:
             res = self.game.score[current] - currscore
             if res > 0:
                 load_prev()
-                actions.append((res, dot))
+                actions.append((res * p.attack_priority, dot))
             load_prev()
 
         if len(actions) == 0:
