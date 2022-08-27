@@ -87,12 +87,12 @@ def draw_env(screen, size, pos,
     for y in range(linesY):
         draw_horizontal_line(screen, black, y, linesX)
     if pos != -1:
-        if mode == 0:
+        if mode != 2:
             if turn == 0:
                 draw_dot(screen, light_blue, pos)
             else:
                 draw_dot(screen, light_red, pos)
-        if mode == 2:
+        else:
             draw_dot(screen, light_gray, pos)
     for dot in dots[0]:
         draw_dot(screen, blue, dot)

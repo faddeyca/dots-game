@@ -5,13 +5,16 @@ from functools import reduce
 import operator
 import math
 from copy import deepcopy
-
 from properties import Properties as p
 from game_drawer import draw_env
+from robot import Robot
 
 
 class Game:
-    def __init__(self, linesX, linesY, mode, player=0, names=("Синие", "Красные")):
+    def __init__(self, linesX, linesY,
+                 mode,
+                 player=0, names=("Синие", "Красные"),
+                 robot=None):
         self.linesX = linesX
         self.linesY = linesY
         self.mode = mode
@@ -26,8 +29,8 @@ class Game:
         self.prev_dots = None
         self.prev_polygons = None
         self.prev_score = None
-        self.prev_count = None
 
+        self.robot = robot
         self.names = names
         self.size = [p.block_size * (self.linesX - 1) + p.gap * 2,
                      p.up_length +
@@ -167,7 +170,7 @@ class Game:
                         self.score[current] += 1
         for x, y in to_fill:
             self.bfs(table, x, y, 2)
-        
+
         self.build_cover(table, current)
 
     def is_avilable(self, pos):
@@ -192,8 +195,8 @@ class Game:
         self.polygons = self.prev_polygons
         self.score = self.prev_score
 
-    def put_dot(self, pos):
-        if self.mode != 1 or self.turn == self.player:
+    def put_dot(self, pos, lock=False):
+        if not lock:
             self.save_prev()
 
         self.dots[self.turn].append(pos)
@@ -201,7 +204,7 @@ class Game:
         self.check(self.turn)
         self.check((self.turn + 1) % 2)
 
-        if self.mode == 0:
+        if self.mode != 2:
             self.turn += 1
             self.turn %= 2
 
@@ -215,7 +218,7 @@ class Game:
             return -1
         x = round(x)
         y = round(y)
-        if x < 0 or x > self.linesX or y < 0 or y > self.linesY:
+        if x < 0 or x >= self.linesX or y < 0 or y >= self.linesY:
             return -1
         return x, y
 
@@ -225,12 +228,11 @@ class Game:
         amount = self.linesX * self.linesY
         if self.mode == 1:
             if self.player == 1:
-                pass
-                # robot.move()
+                self.put_dot((self.linesX // 2, self.linesY // 2))
         while 1:
             count = (len(self.dots[0]) +
-                    len(self.dots[1]) +
-                    len(self.dots[4]))
+                     len(self.dots[1]) +
+                     len(self.dots[4]))
             events = pygame.event.get()
             for event in events:
                 if event.type == pygame.QUIT:
@@ -248,14 +250,16 @@ class Game:
                     pos = -1
                 if event.type == pygame.MOUSEBUTTONUP:
                     if pos == -1:
-                            continue
+                        continue
                     if self.mode == 0:
                         if event.button == 1:
                             self.put_dot(pos)
                     if self.mode == 1:
                         if event.button == 1:
                             self.put_dot(pos)
-                        # robot.move()
+                            rpos = self.robot.move(pos)
+                            if rpos != -1:
+                                self.put_dot(rpos, True)
                     if self.mode == 2:
                         if event.button == 1:
                             self.turn = 0
@@ -277,5 +281,7 @@ class Game:
 
 
 if __name__ == "__main__":
-    game = Game(20, 20, 0)
+    robot = Robot(1)
+    game = Game(20, 20, 1, 0, ("faddey", "robot"), robot)
+    robot.load_game(game)
     game.start()
