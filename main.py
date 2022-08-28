@@ -99,7 +99,7 @@ def start_game_in_pvc_mode(x, y):
     is_computer_first = max(0, is_computer_first)
 
     computer = Computer(level)
-    names = ("Computer", player_name)
+    names = (player_name, "Computer")
     if is_computer_first:
         names = names[::-1]
     game = Game(linesX=x, linesY=y,
@@ -215,7 +215,7 @@ def show_records():
             if len(r) < 4:
                 continue
             name = ' '.join(r[:-3])
-            size = f"{r[-2]} на {r[-1]}"
+            size = f"{r[-2]} на {r[-1][:-1]}"
             text = f"{name} набрал {r[-3]} очков на поле размера {size}"
             text = courier.render(text, 0, white)
             texts.append(text)

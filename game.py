@@ -105,23 +105,23 @@ class Game:
         return res
             
 
-    def build_cover(self, table, current):
+    def build_cover(self, table, current, component):
         def get_count(x, y):
             dot = None
             count = 0
-            if x - 1 >= 0 and table[x - 1][y] == 2:
+            if x - 1 >= 0 and table[x - 1][y] == component:
                 count += 1
             else:
                 dot = (x - 1, y)
-            if x + 1 < self.linesX and table[x + 1][y] == 2:
+            if x + 1 < self.linesX and table[x + 1][y] == component:
                 count += 1
             else:
                 dot = (x + 1, y)
-            if y - 1 >= 0 and table[x][y - 1] == 2:
+            if y - 1 >= 0 and table[x][y - 1] == component:
                 count += 1
             else:
                 dot = (x, y - 1)
-            if y + 1 < self.linesY and table[x][y + 1] == 2:
+            if y + 1 < self.linesY and table[x][y + 1] == component:
                 count += 1
             else:
                 dot = (x, y + 1)
@@ -137,7 +137,7 @@ class Game:
                             polygon.append((x, y))
                     elif count > 0 and count != 4:
                         polygon.append((x, y))
-                if table[x][y] == 2:
+                if table[x][y] == component:
                     self.other_dots.append((x, y))
 
         if polygon:
@@ -182,10 +182,15 @@ class Game:
                         self.dots[enemy].remove((x, y))
                         self.occupied_dots[enemy].append((x, y))
                         self.score[current] += 1
-        for x, y in to_fill:
-            self.bfs(table, x, y, 2)
 
-        self.build_cover(table, current)
+        count = 2
+        for x, y in to_fill:
+            if table[x][y] == -1:
+                self.bfs(table, x, y, count)
+                count += 1
+
+        for component in range(2, count + 1):
+            self.build_cover(table, current, component)
 
     def is_avilable(self, pos):
         return (pos not in self.dots[0] and
