@@ -1,9 +1,6 @@
 from queue import Queue
 import pygame
 import sys
-from functools import reduce
-import operator
-import math
 from copy import deepcopy
 import properties
 from game_drawer import draw_env
@@ -92,6 +89,22 @@ class Game:
                 q.put(dot)
                 count += 1
 
+    def circle_sort(self, polygon):
+        res = []
+        prev = polygon[0]
+        while len(polygon) > 1:
+            res.append(prev)
+            x, y = prev
+            polygon.remove(prev)
+            neigh = []
+            for dot in polygon:
+                dist = ((dot[0] - x) ** 2 + (dot[1] - y) ** 2) ** 0.5
+                neigh.append((dist, dot))
+            prev = sorted(neigh)[0][1]
+        res.append(prev)
+        return res
+            
+
     def build_cover(self, table, current):
         def get_count(x, y):
             dot = None
@@ -127,20 +140,8 @@ class Game:
                 if table[x][y] == 2:
                     self.other_dots.append((x, y))
 
-        if len(polygon) != 0:
-            center = tuple(
-                           map(
-                               operator.truediv,
-                               reduce
-                               (lambda x, y: map
-                                (operator.add, x, y), polygon), [len(polygon)] * 2))
-            sorted_polygon = sorted(polygon,
-                       key=lambda coord:
-                       (-135 - math.degrees
-                        (math.atan2(
-                         *tuple
-                         (map(operator.sub,
-                          coord, center))[::-1]))) % 360)
+        if polygon:
+            sorted_polygon = self.circle_sort(polygon)
             self.polygons.append((sorted_polygon, current))
 
     def check(self, current):
