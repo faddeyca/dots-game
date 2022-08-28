@@ -1,9 +1,9 @@
 import random
 from copy import deepcopy
-from properties import Properties as p
+import properties
 
 
-class Robot:
+class Computer:
     def __init__(self, robot_mode):
         self.robot_mode = robot_mode
         self.game = None
@@ -33,41 +33,38 @@ class Robot:
             elif dot in self.game.dots[enemy]:
                 res[1].append(dot)
             elif (dot not in self.game.dots[self.game.turn] and
-                  dot not in self.game.dots[enemy + 2] and
-                  dot not in self.game.dots[4]):
+                  dot not in self.game.occupied_dots[enemy] and
+                  dot not in self.game.other_dots):
                 res[2].append(dot)
         return res
 
-    def random_move(self):
+    def get_possible_pos(self):
         possible_pos = set()
         enemy = (self.game.turn + 1) % 2
         for x, y in self.game.dots[enemy]:
             neigh = self.get_neighbours(x, y)[2]
             for dot in neigh:
                 possible_pos.add(dot)
-        if len(possible_pos) == 0:
-            return -1
+        return list(possible_pos)
 
-        possible_pos = list(possible_pos)
+    def random_move(self):
+        possible_pos = self.get_possible_pos()
+        if not possible_pos:
+            return None
 
-        i = random.randint(0, len(possible_pos) - 1)
-        return possible_pos[i]
+        return random.choice(possible_pos)
 
     def smart_move(self, pos):
-        possible_pos = set()
         current = self.game.turn
         enemy = (self.game.turn + 1) % 2
-        for x, y in self.game.dots[enemy]:
-            neigh = self.get_neighbours(x, y)[2]
-            for dot in neigh:
-                possible_pos.add(dot)
-        if len(possible_pos) == 0:
-            return -1
-        pre_possible_pos = list(possible_pos)
+
+        pre_possible_pos = self.get_possible_pos()
+        if not pre_possible_pos:
+            return None
 
         possible_pos = []
         count = 3
-        while len(possible_pos) == 0:
+        while not possible_pos:
             for x, y in pre_possible_pos:
                 if abs(x - pos[0]) <= count and abs(y - pos[1]) <= count:
                     possible_pos.append((x, y))
@@ -78,12 +75,16 @@ class Robot:
         def save_prev():
             self.prev_turn = self.game.turn
             self.prev_dots = deepcopy(self.game.dots)
+            self.prev_occupied_dots = deepcopy(self.game.occupied_dots)
+            self.prev_other_dots = deepcopy(self.game.other_dots)
             self.prev_polygons = self.game.polygons.copy()
             self.prev_score = self.game.score.copy()
 
         def load_prev():
             self.game.turn = self.prev_turn
             self.game.dots = self.prev_dots
+            self.game.occupied_dots = self.prev_occupied_dots
+            self.game.other_dots = self.prev_other_dots
             self.game.polygons = self.prev_polygons
             self.game.score = self.prev_score
 
@@ -96,7 +97,7 @@ class Robot:
             res = self.game.score[enemy] - currscore
             if res > 0:
                 load_prev()
-                actions.append((res * p.defence_priority, dot))
+                actions.append((res * properties.DEFENCE_PRIORITY, dot))
             load_prev()
 
         currscore = self.game.score[self.game.turn]
@@ -106,11 +107,10 @@ class Robot:
             res = self.game.score[current] - currscore
             if res > 0:
                 load_prev()
-                actions.append((res * p.attack_priority, dot))
+                actions.append((res * properties.ATTACK_PRIORITY, dot))
             load_prev()
 
-        if len(actions) == 0:
-            i = random.randint(0, len(possible_pos) - 1)
-            return possible_pos[i]
+        if not actions:
+            return random.choice(possible_pos)
         else:
             return sorted(actions)[-1][1]

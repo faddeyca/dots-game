@@ -1,8 +1,7 @@
-class Properties:
-    block_size = 25
-    gap = 50
+BLOCK_SIZE = 25
+GAP = 50
 
-    up_length = 100
+UP_LENGTH = 100
 
-    defence_priority = 0.9
-    attack_priority = 1
+DEFENCE_PRIORITY = 0.9
+ATTACK_PRIORITY = 1
