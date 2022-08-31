@@ -26,10 +26,11 @@ class Computer:
         Returns:
             list((int, int)): Список пар (X, Y).
         """
-        #  Список для генерации координатх соседних клеток.
+        #  Список для генерации координат соседних клеток.
         moves8 = [[-1, -1], [-1, 1], [1, -1], [1, 1],
                   [-1, 0], [0, -1], [0, 1], [1, 0]]
         result = []
+        computer = self.game.turn
         player = (self.game.turn + 1) % 2
 
         #  Перебор соседних клеток и их проверка.
@@ -39,10 +40,12 @@ class Computer:
                     ny < 0 or ny >= self.game.linesY):
                 continue
             dot = (nx, ny)
-            if (dot not in self.game.dots[self.game.turn] and
+            if (dot not in self.game.dots[computer] and
+                    dot not in self.game.dots[player] and
+                    dot not in self.game.occupied_dots[computer] and
                     dot not in self.game.occupied_dots[player] and
                     dot not in self.game.other_dots):
-                result[2].append(dot)
+                result.append(dot)
         return result
 
     def get_possible_pos(self):
@@ -75,7 +78,7 @@ class Computer:
 
         return random.choice(possible_pos)
 
-    def smart_move(self, player_pos: tuple(int, int)):
+    def smart_move(self, player_pos: tuple):
         """Выбирает самый оптимальный ход для компьютера.
            Перебирает и сравнивает по эффективности возможные ходы.
 
@@ -144,7 +147,7 @@ class Computer:
             #  Иммитация хода игрока.
             self.game.turn += 1
             self.game.turn %= 2
-            self.game.put_dot(dot, lock=True)
+            self.game.put_dot(dot, history_lock=True)
             #  Разница между счётом игрока до и после иммитации его хода.
             res = self.game.score[player] - currscore
             #  Загрузка текущего состяния.
@@ -166,7 +169,7 @@ class Computer:
             #  Сохранение текущего состояния.
             save_prev()
             #  Иммитация хода игрока.
-            self.game.put_dot(dot, lock=True)
+            self.game.put_dot(dot, history_lock=True)
             #  Разница между счётом компьютера до и после иммитации его хода.
             res = self.game.score[computer] - currscore
             #  Загрузка текущего состяния.

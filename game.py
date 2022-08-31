@@ -17,41 +17,75 @@ RED_PLAYER = 1
 class Game:
     def __init__(
         self,
-        linesX=39, linesY=32,
-        game_mode=PVP,
-        computer=None, is_computer_first=False,
-        names=("Синие", "Красные")):
+        linesX: int=39, linesY: int=32,
+        game_mode: int=PVP,
+        computer=None, is_computer_first: bool=False,
+            names: tuple=("Синие", "Красные")):
+        """Инициализирует игру."""
 
+        #  Количество линий по ОХ.
         self.linesX = linesX
+        #  Количество линий по ОY.
         self.linesY = linesY
+        #  Режим игры.
         self.game_mode = game_mode
+        #  Флаг, означающий, ходит ли компьютер первым.
         self.is_computer_first = is_computer_first
 
+        #  Чей ход.
         self.turn = BLUE_PLAYER
+        #  Список активных точек.
         self.dots = [[], []]
+        #  Список захваченных точек.
         self.occupied_dots = [[], []]
+        #  Ни кем не захваченные, но туда ходить нельзя.
         self.other_dots = []
+        #  Список многоугольников
         self.polygons = []
+        #  Счёт игроков.
         self.score = [0, 0]
 
+        #  Массив для undo.
         self.history_undo = []
+        #  Массив для redo.
         self.history_redo = []
 
+        #  Инициализированный компьютер.
         self.computer = computer
+        #  Имена игроков.
         self.names = names
+        #  Размер окна по ОХ.
         x = (properties.BLOCK_SIZE * (self.linesX - 1) +
              properties.GAP * 2)
+        #  Размер окна по ОУ.
         y = (properties.UP_LENGTH +
              properties.BLOCK_SIZE * (self.linesY - 1) +
              2 * properties.GAP)
+        #  Размер окна.
         self.size = [x, y]
         self.screen = pygame.display.set_mode(self.size)
         self.timer = pygame.time.Clock()
 
-    def get_neighbours(self, table, x, y):
-        moves4x = [[-1, -1], [-1, 1], [1, -1], [1, 1]]
+    def get_neighbours(self, table: list, x: int, y: int):
+        """Возвращает список достижимых соседей.
+
+        Args:
+            table (list): Игровое поле.
+            -1 - точка пустая, 1 - стена, другое - заполненная.
+            x (int): Координата по ОХ.
+            y (int): Координата по ОY.
+
+        Returns:
+            list((int, int)): Массив точек.
+        """
+        #  Списки для генерации координат соседних клеток.
+        #  Cлева, сверху, справа, снизу. (прямые)
         moves4 = [[-1, 0], [0, -1], [0, 1], [1, 0]]
+        #  Наискосок.
+        moves4x = [[-1, -1], [-1, 1], [1, -1], [1, 1]]
         res = []
+        #  Перебирает прямых соседей.
+        #  Проверяет выход за таблицу и является ли клетка пустой.
         for ax, ay in moves4:
             nx, ny = x + ax, y + ay
             if nx < 0 or nx >= self.linesX or ny < 0 or ny >= self.linesY:
@@ -59,6 +93,9 @@ class Game:
             if table[nx][ny] != -1:
                 continue
             res.append((nx, ny))
+        #  Перебирает соседей наискосок.
+        #  Проверяет выход за таблицу, является ли клетка пустой.
+        #  Проверяет не являются ли 2 соседние-наискосок клетки стенами
         for ax, ay in moves4x:
             nx, ny = x + ax, y + ay
             if nx < 0 or nx >= self.linesX or ny < 0 or ny >= self.linesY:
@@ -74,7 +111,17 @@ class Game:
             res.append((nx, ny))
         return res
 
-    def bfs(self, table, x, y, val=0):
+    def bfs(self, table: list, x: int, y: int, val: int=0):
+        """Заполняет все пустые клетки значением val,
+           начиная от точки (x, y).
+
+        Args:
+            table (list): Игровое поле.
+            -1 - точка пустая, 1 - стена, другое - заполненная.
+            x (int): Координата по ОХ.
+            y (int): Координата по ОY.
+            val (int, optional): Значение, которым заполняется. Defaults to 0.
+        """
         q = Queue()
         q.put((x, y))
         count = 1
@@ -89,21 +136,35 @@ class Game:
                 q.put(dot)
                 count += 1
 
-    def circle_sort(self, polygon):
+    def circle_sort(self, polygon: list):
+        """Сортирует многоугольник по часовой стрелки,
+           чтобы он нормально прорисовывался.
+
+        Args:
+            polygon (list): Массив точек.
+
+        Returns:
+            list((int, int)): Массив точек.
+        """
         res = []
-        prev = polygon[0]
+        current = polygon[0]
+        #  Текущую точку удаляет из старого массива.
+        #  К текущей точке находит самую ближнюю из оставшихся.
+        #  Найденная точка становится текущей.
+        #  Выполняется пока 2 и больше элемента в старом массиве.
+        #  Оставшуюся точку просто добавляет в новый массив.
+        #  Она замыкает окружность.
         while len(polygon) > 1:
-            res.append(prev)
-            x, y = prev
-            polygon.remove(prev)
+            res.append(current)
+            x, y = current
+            polygon.remove(current)
             neigh = []
             for dot in polygon:
                 dist = ((dot[0] - x) ** 2 + (dot[1] - y) ** 2) ** 0.5
                 neigh.append((dist, dot))
-            prev = sorted(neigh)[0][1]
-        res.append(prev)
+            current = sorted(neigh)[0][1]
+        res.append(current)
         return res
-            
 
     def build_cover(self, table, current, component):
         def get_count(x, y):
@@ -244,14 +305,14 @@ class Game:
         if self.game_mode != SANDBOX:
             self.turn += 1
             self.turn %= 2
-        
+
         if not history_lock:
             self.save_current()
 
     def get_mouse_pos(self, pos):
-        x = ((pos[0] - properties.GAP) / 
+        x = ((pos[0] - properties.GAP) /
              properties.BLOCK_SIZE)
-        y = ((pos[1] - properties.GAP - properties.UP_LENGTH) / 
+        y = ((pos[1] - properties.GAP - properties.UP_LENGTH) /
              properties.BLOCK_SIZE)
         delta = 0.3
         a = x % 1 <= delta or x % 1 >= (1 - delta)
