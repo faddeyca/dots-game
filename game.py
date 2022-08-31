@@ -15,11 +15,13 @@ RED_PLAYER = 1
 
 
 class Game:
-    def __init__(self,
-                 linesX=39, linesY=32,
-                 game_mode=PVP,
-                 computer=None, is_computer_first=False,
-                 names=("Синие", "Красные")):
+    def __init__(
+        self,
+        linesX=39, linesY=32,
+        game_mode=PVP,
+        computer=None, is_computer_first=False,
+        names=("Синие", "Красные")):
+
         self.linesX = linesX
         self.linesY = linesY
         self.game_mode = game_mode
@@ -32,10 +34,8 @@ class Game:
         self.polygons = []
         self.score = [0, 0]
 
-        self.prev_turn = None
-        self.prev_dots = None
-        self.prev_polygons = None
-        self.prev_score = None
+        self.history_undo = []
+        self.history_redo = []
 
         self.computer = computer
         self.names = names
@@ -193,34 +193,49 @@ class Game:
             self.build_cover(table, current, component)
 
     def is_avilable(self, pos):
-        return (pos not in self.dots[0] and
-                pos not in self.dots[1] and
-                pos not in self.occupied_dots[0] and
-                pos not in self.occupied_dots[1] and
-                pos not in self.other_dots)
+        return (
+            pos not in self.dots[0] and
+            pos not in self.dots[1] and
+            pos not in self.occupied_dots[0] and
+            pos not in self.occupied_dots[1] and
+            pos not in self.other_dots)
 
-    def save_prev(self):
-        self.prev_turn = self.turn
-        self.prev_dots = deepcopy(self.dots)
-        self.prev_occupied_dots = deepcopy(self.occupied_dots)
-        self.prev_other_dots = deepcopy(self.other_dots)
-        self.prev_polygons = self.polygons.copy()
-        self.prev_score = self.score.copy()
+    def save_current(self):
+        self.history_redo = []
+        note = []
+        note.append(self.turn)
+        note.append(deepcopy(self.dots))
+        note.append(deepcopy(self.occupied_dots))
+        note.append(deepcopy(self.other_dots))
+        note.append(self.polygons.copy())
+        note.append(self.score.copy())
+        self.history_undo.append(note)
 
-    def load_prev(self):
-        if self.prev_dots is None:
-            return
-        self.turn = self.prev_turn
-        self.dots = self.prev_dots
-        self.occupied_dots = self.prev_occupied_dots
-        self.other_dots = self.prev_other_dots
-        self.polygons = self.prev_polygons
-        self.score = self.prev_score
+    def undo(self):
+        if len(self.history_undo) >= 2:
+            self.history_redo.append(deepcopy(self.history_undo[-1]))
+            self.history_undo = self.history_undo[:-1]
+            note = deepcopy(self.history_undo[-1])
+            self.turn = note[0]
+            self.dots = note[1]
+            self.occupied_dots = note[2]
+            self.other_dots = note[3]
+            self.polygons = note[4]
+            self.score = note[5]
 
-    def put_dot(self, pos, lock=False):
-        if not lock:
-            self.save_prev()
+    def redo(self):
+        if self.history_redo:
+            note = deepcopy(self.history_redo[-1])
+            self.history_redo = self.history_redo[:-1]
+            self.history_undo.append(deepcopy(note))
+            self.turn = note[0]
+            self.dots = note[1]
+            self.occupied_dots = note[2]
+            self.other_dots = note[3]
+            self.polygons = note[4]
+            self.score = note[5]
 
+    def put_dot(self, pos, history_lock=False):
         self.dots[self.turn].append(pos)
 
         self.check(self.turn)
@@ -229,6 +244,9 @@ class Game:
         if self.game_mode != SANDBOX:
             self.turn += 1
             self.turn %= 2
+        
+        if not history_lock:
+            self.save_current()
 
     def get_mouse_pos(self, pos):
         x = ((pos[0] - properties.GAP) / 
@@ -251,7 +269,10 @@ class Game:
         pos = None
         amount = self.linesX * self.linesY
         if self.game_mode == PVC and self.is_computer_first:
-            self.put_dot((self.linesX // 2, self.linesY // 2), lock=True)
+            self.put_dot(
+                (self.linesX // 2, self.linesY // 2),
+                history_lock=True)
+        self.save_current()
         while True:
             count = (len(self.dots[0]) +
                      len(self.dots[1]) +
@@ -266,8 +287,10 @@ class Game:
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_q:
                         return self.score
+                    if event.key == pygame.K_u:
+                        self.undo()
                     if event.key == pygame.K_r:
-                        self.load_prev()
+                        self.redo()
                 pos = self.get_mouse_pos(pygame.mouse.get_pos())
                 if not self.is_avilable(pos):
                     pos = None
@@ -282,7 +305,9 @@ class Game:
                             self.put_dot(pos)
                             computer_pos = self.computer.move(pos)
                             if computer_pos is not None:
-                                self.put_dot(computer_pos, True)
+                                self.put_dot(
+                                    computer_pos,
+                                    history_lock=True)
                     if self.game_mode == SANDBOX:
                         if event.button == 1:
                             self.turn = BLUE_PLAYER
@@ -292,11 +317,12 @@ class Game:
                             self.put_dot(pos)
 
             self.timer.tick(60)
-            draw_env(self.screen, self.size, pos,
-                     self.linesX, self.linesY, self.game_mode,
-                     self.turn,
-                     self.dots, self.occupied_dots,
-                     self.polygons,
-                     self.score,
-                     self.names)
+            draw_env(
+                self.screen, self.size, pos,
+                self.linesX, self.linesY, self.game_mode,
+                self.turn,
+                self.dots, self.occupied_dots,
+                self.polygons,
+                self.score,
+                self.names)
             pygame.display.flip()

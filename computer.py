@@ -4,74 +4,113 @@ import properties
 
 
 class Computer:
-    def __init__(self, robot_mode):
+    def __init__(self, robot_mode: int):
         self.robot_mode = robot_mode
         self.game = None
 
     def load_game(self, game):
         self.game = game
 
-    def move(self, pos=None):
+    def move(self, player_pos: int=None):
         if self.robot_mode == 0:
             return self.random_move()
         else:
-            return self.smart_move(pos)
+            return self.smart_move(player_pos)
 
-    def get_neighbours(self, x, y):
+    def get_neighbours(self, x: int, y: int):
+        """Возвращает список незанятых точек по соседству с точкой.
+        Args:
+            x (int): Х координата.
+            y (int): У координата.
+
+        Returns:
+            list((int, int)): Список пар (X, Y).
+        """
+        #  Список для генерации координатх соседних клеток.
         moves8 = [[-1, -1], [-1, 1], [1, -1], [1, 1],
                   [-1, 0], [0, -1], [0, 1], [1, 0]]
-        res = [[], [], []]
-        enemy = (self.game.turn + 1) % 2
+        result = []
+        player = (self.game.turn + 1) % 2
+
+        #  Перебор соседних клеток и их проверка.
         for ax, ay in moves8:
             nx, ny = x + ax, y + ay
             if (nx < 0 or nx >= self.game.linesX or
-               ny < 0 or ny >= self.game.linesY):
+                    ny < 0 or ny >= self.game.linesY):
                 continue
             dot = (nx, ny)
-            if dot in self.game.dots[self.game.turn]:
-                res[0].append(dot)
-            elif dot in self.game.dots[enemy]:
-                res[1].append(dot)
-            elif (dot not in self.game.dots[self.game.turn] and
-                  dot not in self.game.occupied_dots[enemy] and
-                  dot not in self.game.other_dots):
-                res[2].append(dot)
-        return res
+            if (dot not in self.game.dots[self.game.turn] and
+                    dot not in self.game.occupied_dots[player] and
+                    dot not in self.game.other_dots):
+                result[2].append(dot)
+        return result
 
     def get_possible_pos(self):
+        """Возвращает список всех незанятых точек по соседству со всеми точками игрока.
+
+        Returns:
+            list((int, int)): Список пар (X, Y).
+        """
+        #  Множество незанятых точек.
+        #  Используется Set так как могут быть повторения.
         possible_pos = set()
-        enemy = (self.game.turn + 1) % 2
-        for x, y in self.game.dots[enemy]:
-            neigh = self.get_neighbours(x, y)[2]
+        player = (self.game.turn + 1) % 2
+        #  Перебор точек игрока.
+        #  Добавление подходящих соседних точек в множество.
+        for x, y in self.game.dots[player]:
+            neigh = self.get_neighbours(x, y)
             for dot in neigh:
                 possible_pos.add(dot)
         return list(possible_pos)
 
     def random_move(self):
+        """Выбирает случайную точку из списка незанятых точек.
+
+        Returns:
+            (int, int): Пара (X, Y).
+        """
         possible_pos = self.get_possible_pos()
         if not possible_pos:
             return None
 
         return random.choice(possible_pos)
 
-    def smart_move(self, pos):
-        current = self.game.turn
-        enemy = (self.game.turn + 1) % 2
+    def smart_move(self, player_pos: tuple(int, int)):
+        """Выбирает самый оптимальный ход для компьютера.
+           Перебирает и сравнивает по эффективности возможные ходы.
 
+        Args:
+            player_pos (int, int): Последний ход игрока.
+
+        Returns:
+            (int, int): Пара (X, Y).
+        """
+        computer = self.game.turn
+        player = (self.game.turn + 1) % 2
+
+        #  Список всех незанятых точек по соседству со всеми точками игрока.
         pre_possible_pos = self.get_possible_pos()
         if not pre_possible_pos:
             return None
 
+        #  Выбирает точки, расстояние до которых не более
+        #  CHECK_AREA от последнего хода игрока.
+        #  Если не находит подходящих точек, то зона поиска расширяется.
+        max_value = max(self.game.linesX, self.game.linesY) * 2
         possible_pos = []
-        count = 3
+        searching_zone = properties.CHECK_AREA
         while not possible_pos:
             for x, y in pre_possible_pos:
-                if abs(x - pos[0]) <= count and abs(y - pos[1]) <= count:
+                if (abs(x - player_pos[0]) <= searching_zone and
+                        abs(y - player_pos[1]) <= searching_zone):
                     possible_pos.append((x, y))
-            count += 1
+            searching_zone += 1
+            if searching_zone > max_value:
+                #  В теории случиться не должно.
+                #  Можно добиться этой ошибки, подключив компьютер к песочнице.
+                raise ValueError("Зона поиска слишком большая")
 
-        currscore = self.game.score[enemy]
-
+        #  Функция, сохраняющая текущее состояние игры в единичном экземпляре.
         def save_prev():
             self.prev_turn = self.game.turn
             self.prev_dots = deepcopy(self.game.dots)
@@ -80,6 +119,7 @@ class Computer:
             self.prev_polygons = self.game.polygons.copy()
             self.prev_score = self.game.score.copy()
 
+        #  Функция загрузки сохранённого состояния игры.
         def load_prev():
             self.game.turn = self.prev_turn
             self.game.dots = self.prev_dots
@@ -88,29 +128,59 @@ class Computer:
             self.game.polygons = self.prev_polygons
             self.game.score = self.prev_score
 
+        #  Текущий счёт игрока.
+        currscore = self.game.score[player]
+
+        #  Массив возможных ходов с коэфицентами эффективности. (int, dot)
         actions = []
+
+        #  Рассматривает, повысится ли счёт игрока,
+        #  если он поставит точку в dot.
+        #  Если счёт игрока повышается,
+        #  то компьютер может поставить туда точку, чтобы помешать.
         for dot in possible_pos:
+            #  Сохранение текущего состояния.
             save_prev()
+            #  Иммитация хода игрока.
             self.game.turn += 1
             self.game.turn %= 2
             self.game.put_dot(dot, lock=True)
-            res = self.game.score[enemy] - currscore
+            #  Разница между счётом игрока до и после иммитации его хода.
+            res = self.game.score[player] - currscore
+            #  Загрузка текущего состяния.
+            load_prev()
+            #  Если счёт игрока повысился,
+            #  то ход записывается в возможные действия.
+            #  Коэфицент эффективности = res * DEFENCE_PRIORITY
             if res > 0:
-                load_prev()
                 actions.append((res * properties.DEFENCE_PRIORITY, dot))
-            load_prev()
 
-        currscore = self.game.score[self.game.turn]
+        #  Текущий счёт компьютера.
+        currscore = self.game.score[computer]
+
+        #  Рассматривает, повысится ли счёт компьютера,
+        #  если он поставит точку в dot.
+        #  Если счёт компьютера повышается,
+        #  то компьютер может поставить туда точку.
         for dot in possible_pos:
+            #  Сохранение текущего состояния.
             save_prev()
+            #  Иммитация хода игрока.
             self.game.put_dot(dot, lock=True)
-            res = self.game.score[current] - currscore
-            if res > 0:
-                load_prev()
-                actions.append((res * properties.ATTACK_PRIORITY, dot))
+            #  Разница между счётом компьютера до и после иммитации его хода.
+            res = self.game.score[computer] - currscore
+            #  Загрузка текущего состяния.
             load_prev()
+            #  Если счёт компьютера повысился,
+            #  то ход записывается в возможные действия.
+            #  Коэфицент эффективности = res * DEFENCE_PRIORITY
+            if res > 0:
+                actions.append((res * properties.ATTACK_PRIORITY, dot))
 
         if not actions:
+            #  Если никаких умных действий не нашлось,
+            #  то компьютер ходит случайно.
             return random.choice(possible_pos)
         else:
+            #  Компьютер выбирает самый эффективный ход.
             return sorted(actions)[-1][1]

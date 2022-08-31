@@ -17,8 +17,9 @@ SANDBOX = 2
 
 def draw_window(screen, size):
     screen.fill(WHITE)
-    pygame.draw.rect(screen, UP_MENU,
-                     [0, 0, size[0], properties.UP_LENGTH])
+    pygame.draw.rect(
+        screen, UP_MENU,
+        [0, 0, size[0], properties.UP_LENGTH])
 
 
 def draw_polygon(screen, color, polygon):
@@ -72,13 +73,14 @@ def draw_text(screen, names, score, linesX, mode):
     screen.blit(text_mode, (20, 10))
 
 
-def draw_env(screen, size, pos,
-             linesX, linesY, game_mode,
-             turn,
-             dots, occupied_dots,
-             polygons,
-             score,
-             names):
+def draw_env(
+    screen, size, pos,
+    linesX, linesY, game_mode,
+    turn,
+    dots, occupied_dots,
+    polygons,
+    score,
+    names):
 
     draw_window(screen, size)
     draw_text(screen, names, score, linesX, game_mode)
