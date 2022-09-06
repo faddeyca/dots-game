@@ -13,17 +13,17 @@ RED_PLAYER = 1
 class Game:
     def __init__(
         self,
-        linesX: int=39, linesY: int=32,
-        game_mode: str="PVP",
-        computer=None, is_computer_first: bool=False,
-            names: tuple=("Синие", "Красные")):
+        linesX: int = 39, linesY: int = 32,
+        game_mode: str = "PVP",
+        computer=None, is_computer_first: bool = False,
+            names: tuple = ("Синие", "Красные")):
         """
         Инициализирует игру.
         """
 
-        #  Количество линий по ОХ.
+        #  Количество точек по ОХ.
         self.linesX = linesX
-        #  Количество линий по ОY.
+        #  Количество точек по ОY.
         self.linesY = linesY
         #  Режим игры.
         self.game_mode = game_mode
@@ -116,7 +116,7 @@ class Game:
             res.append((nx, ny))
         return res
 
-    def bfs(self, table: list, x: int, y: int, val: int=0):
+    def bfs(self, table: list, x: int, y: int, val: int = 0):
         """
         Заполняет все пустые клетки значением val,
         начиная от точки (x, y).
@@ -388,7 +388,7 @@ class Game:
             self.polygons = note[4]
             self.score = note[5]
 
-    def put_dot(self, pos: tuple, history_lock: bool=False):
+    def put_dot(self, pos: tuple, history_lock: bool = False):
         """
         Совершает ход.
         То есть тсавит точку и выполняет действия.
@@ -495,12 +495,12 @@ class Game:
                                     self.put_dot(pos)
                             case "PVC":
                                 if event.button == 1:
-                                    self.put_dot(pos)
+                                    self.put_dot(
+                                        pos,
+                                        history_lock=True)
                                     computer_pos = self.computer.move(pos)
                                     if computer_pos is not None:
-                                        self.put_dot(
-                                            computer_pos,
-                                            history_lock=True)
+                                        self.put_dot(computer_pos)
                             case "SB":
                                 if event.button == 1:
                                     self.turn = BLUE_PLAYER

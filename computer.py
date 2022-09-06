@@ -11,14 +11,15 @@ class Computer:
     def load_game(self, game):
         self.game = game
 
-    def move(self, player_pos: int=None):
+    def move(self, player_pos: int = None):
         if self.robot_mode == 0:
             return self.random_move()
         else:
             return self.smart_move(player_pos)
 
     def get_neighbours(self, x: int, y: int):
-        """Возвращает список незанятых точек по соседству с точкой.
+        """
+        Возвращает список незанятых точек по соседству с точкой.
         Args:
             x (int): Х координата.
             y (int): У координата.
@@ -49,7 +50,9 @@ class Computer:
         return result
 
     def get_possible_pos(self):
-        """Возвращает список всех незанятых точек по соседству со всеми точками игрока.
+        """
+        Возвращает список всех незанятых точек
+        по соседству со всеми точками игрока.
 
         Returns:
             list((int, int)): Список пар (X, Y).
@@ -79,8 +82,9 @@ class Computer:
         return random.choice(possible_pos)
 
     def smart_move(self, player_pos: tuple):
-        """Выбирает самый оптимальный ход для компьютера.
-           Перебирает и сравнивает по эффективности возможные ходы.
+        """
+        Выбирает самый оптимальный ход для компьютера.
+        Перебирает и сравнивает по эффективности возможные ходы.
 
         Args:
             player_pos (int, int): Последний ход игрока.

@@ -14,7 +14,8 @@ LIGHT_GRAY = (180, 180, 180)
 
 
 def draw_window(screen, size: tuple):
-    """Рисует окно и верхнее меню.
+    """
+    Рисует окно и верхнее меню.
 
     Args:
         size (int, int): Размер окна.
@@ -26,7 +27,8 @@ def draw_window(screen, size: tuple):
 
 
 def draw_polygon(screen, color: tuple, polygon: list):
-    """Рисует многоугольник.
+    """
+    Рисует многоугольник.
 
     Args:
         color: Цвет.
@@ -42,7 +44,8 @@ def draw_polygon(screen, color: tuple, polygon: list):
 
 
 def draw_dot(screen, color: tuple, pos: tuple):
-    """Рисует точку.
+    """
+    Рисует точку.
 
     Args:
         color: Цвет.
@@ -55,7 +58,8 @@ def draw_dot(screen, color: tuple, pos: tuple):
 
 
 def draw_vertical_line(screen, color: tuple, x: int, linesY: int):
-    """Рисует вертикальную линию.
+    """
+    Рисует вертикальную линию.
 
     Args:
         color: Цвет.
@@ -71,7 +75,8 @@ def draw_vertical_line(screen, color: tuple, x: int, linesY: int):
 
 
 def draw_horizontal_line(screen, color: tuple, y: int, linesX: int):
-    """Рисует горизонтальную линию.
+    """
+    Рисует горизонтальную линию.
 
     Args:
         color: Цвет.
@@ -86,7 +91,8 @@ def draw_horizontal_line(screen, color: tuple, y: int, linesX: int):
 
 
 def draw_text(screen, names, score, linesX, game_mode):
-    """Рисует текст в верхнем меню.
+    """
+    Рисует текст в верхнем меню.
 
     Args:
         names (str, str): Имена игроков.
@@ -113,13 +119,14 @@ def draw_env(
     polygons: list,
     score: tuple,
         names: tuple):
-    """Рисует всю игру.
+    """
+    Рисует всю игру.
 
     Args:
         size (tuple): Размер окна.
         pos (tuple): Точка курсора.
-        linesX (int): Количество линий по ОХ.
-        linesY (int): Количество линий по ОY.
+        linesX (int): Количество точек по ОХ.
+        linesY (int): Количество точек по ОY.
         game_mode (int): Режим игры.
         turn (int): Чей ход.
         dots (list((int, int))): Список активных точек.
