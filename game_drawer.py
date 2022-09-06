@@ -12,8 +12,6 @@ BLUE = (0, 0, 255)
 LIGHT_BLUE = (173, 216, 230)
 LIGHT_GRAY = (180, 180, 180)
 
-SANDBOX = 2
-
 
 def draw_window(screen, size: tuple):
     """Рисует окно и верхнее меню.
@@ -100,13 +98,7 @@ def draw_text(screen, names, score, linesX, game_mode):
     courier = pygame.font.SysFont('courier', int(25 * k))
     text_score_1 = courier.render(f"{names[0]}: {score[0]}", 0, WHITE)
     text_score_2 = courier.render(f"{names[1]}: {score[1]}", 0, WHITE)
-    if game_mode == 0:
-        mode_text = "PVP"
-    if game_mode == 1:
-        mode_text = "PVC"
-    if game_mode == 2:
-        mode_text = "SB"
-    text_mode = courier.render(f"Режим: {mode_text}", 0, WHITE)
+    text_mode = courier.render(f"Режим: {game_mode}", 0, WHITE)
     screen.blit(text_score_1, (20, 50))
     screen.blit(text_score_2, (50 + int(300 * k), 50))
     screen.blit(text_mode, (20, 10))
@@ -152,7 +144,7 @@ def draw_env(
         draw_horizontal_line(screen, BLACK, y, linesX)
 
     if pos is not None:
-        if game_mode != SANDBOX:
+        if game_mode != "SB":
             if turn == 0:
                 draw_dot(screen, LIGHT_BLUE, pos)
             else:

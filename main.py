@@ -10,15 +10,20 @@ WHITE = (255, 255, 255)
 GREEN = (0, 200, 0)
 BLACK = (0, 0, 0)
 
-PVP = 0
-PVC = 1
-SANDBOX = 2
-
 BLUE_PLAYER = 0
 RED_PLAYER = 1
 
 
-def ask_text(ask):
+def ask_text(ask: str):
+    """
+    Спрашивает текстовые данные.
+
+    Args:
+        ask (str): Вопрос.
+
+    Returns:
+        str: Ответ.
+    """
     screen = pygame.display.set_mode([600, 75])
     courier = pygame.font.SysFont('courier', 25)
     clock = pygame.time.Clock()
@@ -44,10 +49,10 @@ def ask_text(ask):
 
         screen.fill(BLACK)
 
-        dask = courier.render(ask,
-                              1, WHITE)
-        dresult = courier.render(result,
-                                       1, WHITE)
+        dask = courier.render(
+            ask, 1, WHITE)
+        dresult = courier.render(
+            result, 1, WHITE)
         screen.blit(dask, (10, 10))
         screen.blit(dresult, (10, 40))
 
@@ -55,7 +60,20 @@ def ask_text(ask):
         clock.tick(60)
 
 
-def ask_binary(ask, text1, text2):
+def ask_binary(ask: str, text1: str, text2: str):
+    """
+    Выбор между 2 вариантов.
+
+    Args:
+        ask (str): Вопрос.
+        text1 (str): 1 вариант.
+        text2 (str): 2 вариант.
+
+    Returns:
+        int:
+        0 - 1 вариант
+        1 - 2 вариант
+    """
     screen = pygame.display.set_mode((500, 100))
     courier = pygame.font.SysFont('courier', 25)
     clock = pygame.time.Clock()
@@ -80,7 +98,7 @@ def ask_binary(ask, text1, text2):
                     active2 = False
                 elif box2.collidepoint(event.pos):
                     active2 = not active2
-                    active1 = False 
+                    active1 = False
                 else:
                     active1 = False
                     active2 = False
@@ -90,7 +108,7 @@ def ask_binary(ask, text1, text2):
                 return 1 if active2 else 0
 
         screen.fill((30, 30, 30))
-        
+
         dask = courier.render(ask, True, WHITE)
         dtext1 = courier.render(text1, True, color1)
         dtext2 = courier.render(text2, True, color2)
@@ -105,6 +123,9 @@ def ask_binary(ask, text1, text2):
 
 
 def ask_size():
+    """
+    Запрашивает размер поля.
+    """
     screen = pygame.display.set_mode((500, 100))
     courier = pygame.font.SysFont('courier', 25)
     clock = pygame.time.Clock()
@@ -133,7 +154,7 @@ def ask_size():
                     active2 = False
                 elif box2.collidepoint(event.pos):
                     active2 = not active2
-                    active1 = False 
+                    active1 = False
                 else:
                     active1 = False
                     active2 = False
@@ -160,9 +181,8 @@ def ask_size():
                         if len(text2) < 2 and c.isdigit():
                             text2 += c
 
-
         screen.fill(BLACK)
-        
+
         dask = courier.render(ask, True, WHITE)
         dtext1 = courier.render(text1, True, WHITE)
         dtext2 = courier.render(text2, True, WHITE)
@@ -176,7 +196,14 @@ def ask_size():
         clock.tick(60)
 
 
-def start_game_in_pvp_mode(x, y):
+def start_game_in_pvp_mode(x: int, y: int):
+    """
+    Запускает игру в PVP.
+
+    Args:
+        x (int): Количество точек по ОХ.
+        y (int): Количество точек по ОУ.
+    """
     blue_player_name = ask_text("Введите имя 1 игрока:")
     if not blue_player_name:
         blue_player_name = "Игрок 1"
@@ -186,7 +213,7 @@ def start_game_in_pvp_mode(x, y):
 
     game = Game(
         linesX=x, linesY=y,
-        game_mode=PVP,
+        game_mode="PVP",
         names=(blue_player_name, red_player_name))
 
     score = game.start()
@@ -206,7 +233,14 @@ def start_game_in_pvp_mode(x, y):
     show_result(score, blue_player_name, red_player_name)
 
 
-def start_game_in_pvc_mode(x, y):
+def start_game_in_pvc_mode(x: int, y: int):
+    """
+    Запускает игру в PVC.
+
+    Args:
+        x (int): Количество точек по ОХ.
+        y (int): Количество точек по ОУ.
+    """
     player_name = ask_text("Введите имя игрока:")
     if not player_name:
         player_name = "Игрок"
@@ -220,7 +254,7 @@ def start_game_in_pvc_mode(x, y):
         names = names[::-1]
     game = Game(
         linesX=x, linesY=y,
-        game_mode=PVC,
+        game_mode="PVC",
         computer=computer, is_computer_first=is_computer_first,
         names=names)
     computer.load_game(game)
@@ -242,10 +276,17 @@ def start_game_in_pvc_mode(x, y):
         show_result(score, player_name, "Computer")
 
 
-def start_game_in_sandbox_mode(x, y):
+def start_game_in_sandbox_mode(x: int, y: int):
+    """
+    Запускает игру в SANDBOX.
+
+    Args:
+        x (int): Количество точек по ОХ.
+        y (int): Количество точек по ОУ.
+    """
     game = Game(
         linesX=x, linesY=y,
-        game_mode=SANDBOX)
+        game_mode="SB")
     score = game.start()
     show_result(score, "Синие", "Красные")
 
@@ -253,17 +294,26 @@ def start_game_in_sandbox_mode(x, y):
 def start_game(game_mode):
     x, y = ask_size()
 
-    if game_mode == PVP:
-        start_game_in_pvp_mode(x, y)
-    if game_mode == PVC:
-        start_game_in_pvc_mode(x, y)
-    if game_mode == SANDBOX:
-        start_game_in_sandbox_mode(x, y)
+    match game_mode:
+        case "PVP":
+            start_game_in_pvp_mode(x, y)
+        case "PVC":
+            start_game_in_pvc_mode(x, y)
+        case "SB":
+            start_game_in_sandbox_mode(x, y)
 
     build_menu()
 
 
-def show_result(score, name_1=None, name_2=None):
+def show_result(score: tuple, name_1: str, name_2: str):
+    """
+    Вывод результатов после игры.
+
+    Args:
+        score ((int, int)): Счёт.
+        name_1 (str): Имя 1 игрока.
+        name_2 (str): Имя 2 игрока.
+    """
     screen = pygame.display.set_mode([500, 75])
     while True:
         for event in pygame.event.get():
@@ -285,7 +335,16 @@ def show_result(score, name_1=None, name_2=None):
         pygame.display.flip()
 
 
-def write_record(name, score, x, y):
+def write_record(name: str, score: int, x: int, y: int):
+    """
+    Записывает результат в таблицу рекордов.
+
+    Args:
+        name (str): _description_
+        score (int): _description_
+        x (int): _description_
+        y (int): _description_
+    """
     if not os.path.exists("records.txt"):
         with open("records.txt", "w", encoding='utf-8') as f:
             a = f"{name} {score} {x} {y}"
@@ -309,6 +368,9 @@ def write_record(name, score, x, y):
 
 
 def show_records():
+    """
+    Выводит таблицу рекордов.
+    """
     screen = pygame.display.set_mode([1000, 310])
     courier = pygame.font.SysFont('courier', 25)
     texts = []
@@ -348,10 +410,10 @@ def start():
     menu = pygame_menu.Menu(
         "Меню", 400, 400,
         theme=pygame_menu.themes.THEME_BLUE)
-    menu.add.button('PVP', lambda: start_game(PVP))
-    menu.add.button('PVC', lambda: start_game(PVC))
+    menu.add.button('PVP', lambda: start_game("PVP"))
+    menu.add.button('PVC', lambda: start_game("PVC"))
     menu.add.button('Таблица рекордов', show_records)
-    menu.add.button('Песочница', lambda: start_game(SANDBOX))
+    menu.add.button('Песочница', lambda: start_game("SB"))
     menu.add.button('Выход', pygame_menu.events.EXIT)
     menu.set_title("Точки")
     menu.mainloop(screen)
