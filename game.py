@@ -66,9 +66,7 @@ class Game:
 
     def get_neighbours(self, table: list, x: int, y: int):
         """
-        Возвращает список достижимых соседей.
-        Сосед является недостижимым, когда
-        между ним и точкой по диагонали есть стена.
+        Возвращает список соседей.
 
         Args:
             table (list): Игровое поле.
@@ -79,39 +77,18 @@ class Game:
         Returns:
             list((int, int)): Массив точек.
         """
-        #  Списки для генерации координат соседних клеток.
-        #  Cлева, сверху, справа, снизу. (прямые)
+        #  Cлева, сверху, справа, снизу.
         moves4 = [[-1, 0], [0, -1], [0, 1], [1, 0]]
-        #  Наискосок.
-        moves4x = [[-1, -1], [-1, 1], [1, -1], [1, 1]]
         res = []
         for ax, ay in moves4:
             """
-            Перебирает прямых соседей.
+            Перебирает соседей.
             Проверяет выход за таблицу и является ли точка пустой.
             """
             nx, ny = x + ax, y + ay
             if nx < 0 or nx >= self.linesX or ny < 0 or ny >= self.linesY:
                 continue
             if table[nx][ny] != -1:
-                continue
-            res.append((nx, ny))
-        for ax, ay in moves4x:
-            """
-            Перебирает соседей наискосок.
-            Проверяет выход за таблицу, является ли точка пустой.
-            Проверяет не являются ли 2 соседние-наискосок точки стенами.
-            """
-            nx, ny = x + ax, y + ay
-            if nx < 0 or nx >= self.linesX or ny < 0 or ny >= self.linesY:
-                continue
-            if table[nx][ny] != -1:
-                continue
-            dx = nx - x
-            dy = ny - y
-            first = table[x + dx][y] == 1
-            second = table[x][y + dy] == 1
-            if first and second:
                 continue
             res.append((nx, ny))
         return res
