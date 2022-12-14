@@ -61,7 +61,7 @@ class Game:
              2 * properties.GAP)
         #  Размер окна.
         self.size = [x, y]
-        self.screen = pygame.display.set_mode(self.size)
+        self.screen = pygame.display.set_mode(self.size, depth=12, vsync=1)
         self.timer = pygame.time.Clock()
 
     def get_neighbours(self, table: list, x: int, y: int):
@@ -348,6 +348,8 @@ class Game:
         """
         Сохраняет текущее состояние игры.
         """
+        if self.game_mode == "ONLINE":
+            return
         self.history_redo = []
         note = []
         note.append(self.turn)
@@ -362,6 +364,8 @@ class Game:
         """
         Возвращает состояние игры к предыдущему.
         """
+        if self.game_mode == "ONLINE":
+            return
         if len(self.history_undo) >= 2:
             self.history_redo.append(deepcopy(self.history_undo[-1]))
             self.history_undo = self.history_undo[:-1]
@@ -377,6 +381,8 @@ class Game:
         """
         Возвращает состояние игры к новому, после undo.
         """
+        if self.game_mode == "ONLINE":
+            return
         if self.history_redo:
             note = deepcopy(self.history_redo[-1])
             self.history_redo = self.history_redo[:-1]
@@ -452,7 +458,7 @@ class Game:
             return None
         return x, y
 
-    def start(self):
+    def start(self, sc=None, turn=None):
         pygame.init()
         #  Текущая позиция курсора.
         pos = None
@@ -466,6 +472,14 @@ class Game:
         #  Сохраняется начальное состояние игры.
         self.save_current()
         while True:
+            if self.game_mode == "ONLINE" and turn == 1:
+                x = int(str(sc.recv(1024).decode()))
+                if x == -1:
+                    return self.score
+                y = int(str(sc.recv(1024).decode()))
+                pos = (x, y)
+                self.put_dot(pos)
+                turn = 0
             count = (len(self.dots[0]) +
                      len(self.dots[1]) +
                      len(self.other_dots))
@@ -481,6 +495,8 @@ class Game:
                         sys.exit()
                     case pygame.KEYDOWN:
                         if event.key == pygame.K_q:
+                            if self.game_mode == "ONLINE":
+                                sc.send(bytes(str(-1).encode()))
                             return self.score
                         if event.key == pygame.K_u:
                             self.undo()
@@ -508,6 +524,12 @@ class Game:
                                 if event.button == 3:
                                     self.turn = RED_PLAYER
                                     self.put_dot(pos)
+                            case "ONLINE":
+                                if event.button == 1:
+                                    self.put_dot(pos)
+                                    sc.send(bytes(str(pos[0]).encode()))
+                                    sc.send(bytes(str(pos[1]).encode()))
+                                    turn = 1
 
             self.timer.tick(60)
             draw_env(

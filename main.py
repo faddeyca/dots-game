@@ -4,6 +4,7 @@ import sys
 import os
 from game import Game
 from computer import Computer
+import socket
 
 
 WHITE = (255, 255, 255)
@@ -14,7 +15,7 @@ BLUE_PLAYER = 0
 RED_PLAYER = 1
 
 
-def ask_text(ask: str):
+def ask_text(ask: str, max_len: int = 10):
     """
     Спрашивает текстовые данные.
 
@@ -24,7 +25,7 @@ def ask_text(ask: str):
     Returns:
         str: Ответ.
     """
-    screen = pygame.display.set_mode([600, 75])
+    screen = pygame.display.set_mode([600, 75], depth=12, vsync=1)
     courier = pygame.font.SysFont('courier', 25)
     clock = pygame.time.Clock()
 
@@ -44,7 +45,7 @@ def ask_text(ask: str):
                 if event.key == pygame.K_BACKSPACE:
                     result = result[:-1]
                 else:
-                    if len(result) < 10:
+                    if len(result) < max_len:
                         result += c
 
         screen.fill(BLACK)
@@ -74,7 +75,7 @@ def ask_binary(ask: str, text1: str, text2: str):
         0 - 1 вариант
         1 - 2 вариант
     """
-    screen = pygame.display.set_mode((500, 100))
+    screen = pygame.display.set_mode((500, 100), depth=12, vsync=1)
     courier = pygame.font.SysFont('courier', 25)
     clock = pygame.time.Clock()
 
@@ -126,7 +127,7 @@ def ask_size():
     """
     Запрашивает размер поля.
     """
-    screen = pygame.display.set_mode((500, 100))
+    screen = pygame.display.set_mode((500, 100), depth=12, vsync=1)
     courier = pygame.font.SysFont('courier', 25)
     clock = pygame.time.Clock()
 
@@ -291,18 +292,102 @@ def start_game_in_sandbox_mode(x: int, y: int):
     show_result(score, "Синие", "Красные")
 
 
-def start_game(game_mode):
-    x, y = ask_size()
+def start_game_in_online_mode():
+    """
+    Запускает игру в SANDBOX.
 
+    Args:
+        x (int): Количество точек по ОХ.
+        y (int): Количество точек по ОУ.
+    """
+    type = ask_binary("Выберите свою роль",
+                      "Хост",
+                      "Игрок")
+    if type == 0:
+        ip = socket.gethostbyname(socket.gethostname())
+        sock = socket.socket()
+        sock.bind((ip, 0))
+        ip, port = sock.getsockname()
+        show_text(f"ip: {ip} port: {port}")
+        sock.listen(1)
+        sc, addr = sock.accept()
+
+        name_host = ask_text("Введите имя")
+        sc.send(bytes(name_host.encode()))
+        show_text("Ждите ответа игрока")
+        name_player = str(sc.recv(1024).decode())
+
+        turn = ask_binary("Кто ходит первым?",
+                          "Хост",
+                          "Игрок")
+        sc.send(bytes(str(turn).encode()))
+
+        x, y = ask_size()
+        sc.send(bytes(str(x).encode()))
+        sc.send(bytes(str(y).encode()))
+
+        game = Game(
+            linesX=x, linesY=y,
+            game_mode="ONLINE",
+            names=(name_host, name_player))
+        score = game.start(sc, turn)
+        show_result(score, name_host, name_player)
+    else:
+        sc = socket.socket()
+        ip = ask_text("Введите ip хоста", 15)
+        port = int(ask_text("Введите port хоста", 5))
+        sc.connect((ip, port))
+
+        show_text("Ждите ответа хоста")
+        name_host = str(sc.recv(1024).decode())
+        name_player = ask_text("Введите имя")
+        sc.send(bytes(name_player.encode()))
+
+        show_text("Ждите ответа хоста")
+        turn = int(str(sc.recv(1024).decode()))
+
+        x = int(str(sc.recv(1024).decode()))
+        y = int(str(sc.recv(1024).decode()))
+
+        game = Game(
+            linesX=x, linesY=y,
+            game_mode="ONLINE",
+            names=(name_player, name_host))
+        score = game.start(sc, (turn + 1) % 2)
+        show_result(score, name_player, name_host)
+
+
+def start_game(game_mode):
     match game_mode:
         case "PVP":
+            x, y = ask_size()
             start_game_in_pvp_mode(x, y)
         case "PVC":
+            x, y = ask_size()
             start_game_in_pvc_mode(x, y)
         case "SB":
+            x, y = ask_size()
             start_game_in_sandbox_mode(x, y)
+        case "ONLINE":
+            start_game_in_online_mode()
 
     build_menu()
+
+
+def show_text(text: str):
+    """
+    Вывод результатов после игры.
+
+    Args:
+        score ((int, int)): Счёт.
+        name_1 (str): Имя 1 игрока.
+        name_2 (str): Имя 2 игрока.
+    """
+    screen = pygame.display.set_mode([500, 40], depth=12, vsync=1)
+    courier = pygame.font.SysFont('courier', 25)
+    text_1 = courier.render(text, 0, WHITE)
+    screen.blit(text_1, (10, 10))
+    pygame.display.flip()
 
 
 def show_result(score: tuple, name_1: str, name_2: str):
@@ -314,7 +399,7 @@ def show_result(score: tuple, name_1: str, name_2: str):
         name_1 (str): Имя 1 игрока.
         name_2 (str): Имя 2 игрока.
     """
-    screen = pygame.display.set_mode([500, 75])
+    screen = pygame.display.set_mode([500, 75], depth=12, vsync=1)
     while True:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -371,7 +456,7 @@ def show_records():
     """
     Выводит таблицу рекордов.
     """
-    screen = pygame.display.set_mode([1000, 310])
+    screen = pygame.display.set_mode([1000, 310], depth=12, vsync=1)
     courier = pygame.font.SysFont('courier', 25)
     texts = []
     if os.path.exists("records.txt"):
@@ -412,6 +497,7 @@ def start():
         theme=pygame_menu.themes.THEME_BLUE)
     menu.add.button('PVP', lambda: start_game("PVP"))
     menu.add.button('PVC', lambda: start_game("PVC"))
+    menu.add.button('Online', lambda: start_game("ONLINE"))
     menu.add.button('Таблица рекордов', show_records)
     menu.add.button('Песочница', lambda: start_game("SB"))
     menu.add.button('Выход', pygame_menu.events.EXIT)
@@ -422,7 +508,7 @@ def start():
 def build_menu():
     pygame.init()
     pygame.display.set_caption("Точки")
-    return pygame.display.set_mode([400, 400])
+    return pygame.display.set_mode([400, 400], depth=12, vsync=1)
 
 
 if __name__ == "__main__":
