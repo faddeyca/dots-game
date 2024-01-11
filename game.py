@@ -16,74 +16,74 @@ class Game:
         linesX: int = 39, linesY: int = 32,
         game_mode: str = "PVP",
         computer=None, is_computer_first: bool = False,
-            names: tuple = ("Синие", "Красные")):
+            names: tuple = ("Blue", "Red")):
         """
-        Инициализирует игру.
+        Initializes the game.
         """
 
-        #  Количество точек по ОХ.
+        #  Amount of dots by Х-axis.
         self.linesX = linesX
-        #  Количество точек по ОY.
+        #  Amount of dots by Y-axis.
         self.linesY = linesY
-        #  Режим игры.
+        #  Game mode
         self.game_mode = game_mode
-        #  Флаг, означающий, ходит ли компьютер первым.
+        #  Flag indicating whether the computer moves first.
         self.is_computer_first = is_computer_first
 
-        #  Чей ход.
+        #  Whose turn it is.
         self.turn = BLUE_PLAYER
-        #  Список активных точек.
+        #  List of active points.
         self.dots = [[], []]
-        #  Список захваченных точек.
+        #  List of captured points.
         self.occupied_dots = [[], []]
-        #  Ни кем не захваченные, но туда ходить нельзя.
+        #  Points that are not captured by anyone but cannot be moved to.
         self.other_dots = []
-        #  Список многоугольников
+        #  List of polygons.
         self.polygons = []
-        #  Счёт игроков.
+        #  Players' scores.
         self.score = [0, 0]
 
-        #  Массив для undo.
+        #  List for undo.
         self.history_undo = []
-        #  Массив для redo.
+        #  List for redo.
         self.history_redo = []
 
-        #  Инициализированный компьютер.
+        #  Initialized computer.
         self.computer = computer
-        #  Имена игроков.
+        #  Players' names.
         self.names = names
-        #  Размер окна по ОХ.
+        #  Windows size by Х-axis.
         x = (properties.BLOCK_SIZE * (self.linesX - 1) +
              properties.GAP * 2)
-        #  Размер окна по ОУ.
+        #  Windows size by Y-axis.
         y = (properties.UP_LENGTH +
              properties.BLOCK_SIZE * (self.linesY - 1) +
              2 * properties.GAP)
-        #  Размер окна.
+        #  Windows size.
         self.size = [x, y]
         self.screen = pygame.display.set_mode(self.size, depth=12, vsync=1)
         self.timer = pygame.time.Clock()
 
     def get_neighbours(self, table: list, x: int, y: int):
         """
-        Возвращает список соседей.
+       Returns a list of neighbors.
 
         Args:
-            table (list): Игровое поле.
-            -1 - точка пустая, 1 - стена, другое - заполненная.
-            x (int): Координата точки по ОХ.
-            y (int): Координата точки по ОY.
+            table (list): Game field.
+            -1 - empty point, 1 - wall, other values - filled.
+            x (int): Point's coordinate along the X-axis.
+            y (int): Point's coordinate along the Y-axis.
 
         Returns:
-            list((int, int)): Массив точек.
+            list((int, int)): Dots' array.
         """
         #  Cлева, сверху, справа, снизу.
         moves4 = [[-1, 0], [0, -1], [0, 1], [1, 0]]
         res = []
         for ax, ay in moves4:
             """
-            Перебирает соседей.
-            Проверяет выход за таблицу и является ли точка пустой.
+            Iterates over neighbors.
+            Checks for out-of-bounds and whether the point is empty.
             """
             nx, ny = x + ax, y + ay
             if nx < 0 or nx >= self.linesX or ny < 0 or ny >= self.linesY:
@@ -95,15 +95,15 @@ class Game:
 
     def bfs(self, table: list, x: int, y: int, val: int = 0):
         """
-        Заполняет все пустые клетки значением val,
-        начиная от точки (x, y).
+        Fills all empty cells with the value val,
+        starting from the point (x, y).
 
         Args:
-            table (list): Игровое поле.
-            -1 - точка пустая, 1 - стена, другое - заполненная.
-            x (int): Координата точки по ОХ.
-            y (int): Координата точки по ОY.
-            val (int, optional): Значение, которым заполняется. Defaults to 0.
+            table (list): Game field.
+            -1 - empty point, 1 - wall, other values - filled.
+            x (int): Point's coordinate along the X-axis.
+            y (int): Point's coordinate along the Y-axis.
+            val (int, optional): Value to fill with. Defaults to 0.
         """
         q = Queue()
         q.put((x, y))
@@ -121,25 +121,24 @@ class Game:
 
     def circle_sort(self, polygon: list):
         """
-        Сортирует многоугольник по часовой стрелки,
-        чтобы он нормально прорисовывался.
+        Sorts the polygon clockwise to ensure it is drawn correctly.
 
         Args:
-            polygon (list): Массив точек.
+            polygon (list): Dots' array.
 
         Returns:
-            list((int, int)): Массив точек.
+            list((int, int)): Dots' array.
         """
         res = []
         current = polygon[0]
         while len(polygon) > 1:
             """
-            Текущую точку удаляет из старого массива.
-            К текущей точке находит самую ближнюю из оставшихся.
-            Найденная точка становится текущей.
-            Выполняется пока 2 и больше элемента в старом массиве.
-            Оставшуюся точку просто добавляет в новый массив.
-            Она замыкает окружность.
+            The current point is removed from the old array.
+            The closest point to the current one is found among the remaining points.
+            The found point becomes the current one.
+            This is done as long as there are 2 or more elements in the old array.
+            The remaining point is simply added to the new array.
+            It closes the loop.
             """
             res.append(current)
             x, y = current
@@ -154,23 +153,24 @@ class Game:
 
     def build_cover(self, table: list, current: int, component: int):
         """
-        Строит оболочку вокруг захваченных зон.
+        Builds a hull around captured areas.
 
         Args:
-            table (list): Игровое поле.
-            current (int): Текущий игрок.
-            component (int): Номер окружённой зоны.
+            table (list): Game field.
+            current (int): Current player.
+            component (int): Number of the surrounded area.
         """
         def get_count(x: int, y: int):
-            """Возвращает число соседних клеток,
-               которые находятся в окружённой зоне.
+            """
+            Returns the number of neighboring cells
+            that are in the surrounded area.
 
             Args:
-                x (int): Координата по ОХ.
-                y (int): Координата по ОН.
+                x (int): Coordinate along the X-axis.
+                y (int): Coordinate along the Y-axis.
 
             Returns:
-                int: Число соседей.
+                int: Number of neighbors.
             """
             dot = None
             count = 0
@@ -196,12 +196,12 @@ class Game:
         for x in range(self.linesX):
             for y in range(self.linesY):
                 """
-                Перебирает поле.
-                Добавляет стену в многоугольник, если
-                она граничит с окружённой зоной, но
-                не окружена ею, а в случае если окружена
-                окружённой зоной с 3 сторон, то 4
-                сосед это не стена.
+                Iterates over the field.
+                Adds a wall to the polygon if
+                it borders a surrounded area but
+                is not surrounded by it, and in the case
+                where it is surrounded by the surrounded area
+                on 3 sides, the 4th neighbor is not a wall.
                 """
                 if table[x][y] == 1:
                     count, dot = get_count(x, y)
@@ -210,8 +210,8 @@ class Game:
                             polygon.append((x, y))
                     elif count > 0 and count != 4:
                         polygon.append((x, y))
-                #  Также блокирует пустые клетки,
-                #  которые попали в оккупированную зону.
+                #  Also blocks empty cells
+                #  that have entered the occupied area.
                 if table[x][y] == component:
                     self.other_dots.append((x, y))
 
@@ -221,23 +221,22 @@ class Game:
 
     def check(self, current: int):
         """
-        Проверяет не окружил ли текущий игрок соперника.
-        От всех краёв запсукается обход в ширину.
-        В итоге, если нашлась незаполненная точка, то
-        это значит, что эта точка попадает под окружение
-        текущего игрока, и если там стоит точка противника, то
-        она объявляется захваченной.
+        Checks whether the current player has surrounded the opponent.
+        A breadth-first search is launched from all edges.
+        In the end, if an unoccupied point is found, it means that
+        this point falls under the surround of the current player,
+        and if there is an opponent's point there, it is declared captured
 
         Args:
-            current (int): Текущий игрок.
+            current (int): Current player.
         """
         #  Игровое поле
         table = []
         for x in range(self.linesX):
             """
-            Строит игровое поле по текущему игроку.
-            То есть на поле есть только точки текущего игрока(1).
-            Остальные - пустое пространство(-1).
+            Builds the game field for the current player.
+            That is, the field only contains points of the current player (1).
+            Others are empty spaces (-1).
             """
             line = []
             for y in range(self.linesY):
@@ -248,9 +247,9 @@ class Game:
             table.append(line)
 
         """
-        Перебираются точки по рамке поля.
-        Если попадается пустая точка, то от нее запускается
-        обход в ширину, и все доступные точки заполняются 0.
+        Iterates over the points along the border of the field.
+        If an empty point is encountered, a breadth-first search is launched from it,
+        and all accessible points are filled with 0.
         """
         for x in range(self.linesX):
             if table[x][0] == -1:
@@ -266,9 +265,8 @@ class Game:
                 self.bfs(table, self.linesX - 1, y)
 
         """
-        Перебирается всё поле. В массив добавляются
-        незаполненные точки, в которых есть точка противника.
-        Также из под захвата освобождаются собственные точки.
+        Iterates over the entire field. Unfilled points that contain an opponent's point are added to the array.
+        Also, own points are freed from capture.
         """
         to_fill = []
         enemy = (current + 1) % 2
@@ -286,9 +284,9 @@ class Game:
                         self.score[enemy] -= 1
 
         """
-        Заполняет все захваченные зоны, в которых
-        оказалась точка противника уникальным числом.
-        То есть каждая такая зона - отдельная компонента связности.
+        Fills all captured areas in which
+        an opponent's point has ended up with a unique number.
+        Each such area is a separate connected component.
         """
         count = 2
         for x, y in to_fill:
@@ -297,22 +295,20 @@ class Game:
                 count += 1
 
         """
-        Вокруг каждой компоненты независимо строится
-        многоугольник.
+        A polygon is independently constructed around each component.
         """
         for component in range(2, count + 1):
             self.build_cover(table, current, component)
 
     def is_free(self, pos: tuple):
         """
-        Проверяет не находится ли точка
-        хотя бы в одном из массивов точек.
+        Checks if the point is in at least one of the arrays of points.
 
         Args:
-            pos ((int, int)): Координаты точки.
+            pos ((int, int)): Point coordinates.
 
         Returns:
-            bool: Результат проверки.
+            bool: Result of the check.
         """
         return (
             pos not in self.dots[0] and
@@ -323,7 +319,7 @@ class Game:
 
     def save_current(self):
         """
-        Сохраняет текущее состояние игры.
+        Saves the current state of the game.
         """
         if self.game_mode == "ONLINE":
             return
@@ -339,7 +335,7 @@ class Game:
 
     def undo(self):
         """
-        Возвращает состояние игры к предыдущему.
+        Returns the game state to the previous one.
         """
         if self.game_mode == "ONLINE":
             return
@@ -356,7 +352,7 @@ class Game:
 
     def redo(self):
         """
-        Возвращает состояние игры к новому, после undo.
+        Returns the game state to a new one after undo.
         """
         if self.game_mode == "ONLINE":
             return
@@ -373,55 +369,55 @@ class Game:
 
     def put_dot(self, pos: tuple, history_lock: bool = False):
         """
-        Совершает ход.
-        То есть тсавит точку и выполняет действия.
+        Makes a move.
+        That is, places a point and performs actions.
 
         Args:
-            pos ((int, int)): Координаты точки.
+            pos ((int, int)): Point coordinates.
             history_lock (bool, optional):
-            Блокировка записи в историю. Defaults to False.
+            Lock for recording in history. Defaults to False.
         """
-        #  Добвляется к активным точкам текущего игрока.
+        #  Added to the active points of the current player.
         self.dots[self.turn].append(pos)
 
-        #  Проверяет окружил ли текущий игрок противника.
+        #  Checks whether the current player has surrounded the opponent.
         self.check(self.turn)
-        #  Проверяет не попала ли точка в окружение противника.
+        #  Checks whether the point has fallen into the opponent's surround.
         self.check((self.turn + 1) % 2)
 
-        #  Если режим игры не песочница, то переключает ход.
+        #  If the game mode is not sandbox, then switch turns.
         if self.game_mode != "SB":
             self.turn += 1
             self.turn %= 2
 
-        #  Сохраняет текущее состояние игры,
-        #  если нет флага, запрещающего это.
+        #  Saves the current state of the game,
+        #  if there is no flag preventing it.
         if not history_lock:
             self.save_current()
 
     def get_mouse_pos(self, pos: tuple):
         """
-        Возвращает позицию курсора в треминах
-        координат игрового поля.
+        Returns the cursor position in terms of
+        game field coordinates.
 
         Args:
-            pos ((int, int)): Координаты мышки.
-            Относительно игрового окна.
+            pos ((int, int)): Mouse coordinates.
+            Relative to the game window.
 
         Returns:
-            (int, int): Координаты точки.
+            (int, int): Point coordinates.
         """
-        #  Координаты в клетках.
-        #  Могут быть дробными.
+        #  Coordinates in cells.
+        #  Can be fractional.
         x = ((pos[0] - properties.GAP) /
              properties.BLOCK_SIZE)
         y = ((pos[1] - properties.GAP - properties.UP_LENGTH) /
              properties.BLOCK_SIZE)
-        #  Окрестность нажатия.
+        #  Neighborhood of the click.
         delta = 0.3
-        #  Если координаты мышки не больше чем delta
-        #  по каждой оси от какой-то точки, то
-        #  выбирается эта точка.
+        #  If the mouse coordinates are not greater than delta
+        #  in each axis from some point, then
+        #  that point is selected.
         a = x % 1 <= delta or x % 1 >= (1 - delta)
         b = y % 1 <= delta or y % 1 >= (1 - delta)
         if not (a and b):
@@ -430,23 +426,23 @@ class Game:
         y = round(y)
         if x < 0 or x >= self.linesX or y < 0 or y >= self.linesY:
             return None
-        #  Также выбранная точка должна быть свободной.
+        #  The selected point should also be free.
         if not self.is_free((x, y)):
             return None
         return x, y
 
     def start(self, sc=None, turn=None):
         pygame.init()
-        #  Текущая позиция курсора.
+        #  Current cursor position.
         pos = None
-        #  Количество точек всего.
+        #  Total number of points.
         amount = self.linesX * self.linesY
-        #  Первый ход компьютера.
+        #  The computer's first move.
         if self.game_mode == "PVC" and self.is_computer_first:
             self.put_dot(
                 (self.linesX // 2, self.linesY // 2),
                 history_lock=True)
-        #  Сохраняется начальное состояние игры.
+        #  The initial state of the game is saved.
         self.save_current()
         while True:
             if self.game_mode == "ONLINE" and turn == 1:
@@ -460,7 +456,7 @@ class Game:
             count = (len(self.dots[0]) +
                      len(self.dots[1]) +
                      len(self.other_dots))
-            #  Если не осталось свободных точек, то игра заканчивается.
+            #  If there are no more free points, the game ends.
             if count == amount:
                 return self.score
             events = pygame.event.get()

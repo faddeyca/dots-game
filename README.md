@@ -1,55 +1,52 @@
-Меню:
+Menu:
 
-    PVP - игрок против игрока:
-        1. Введите размеры игрового поля - числа от 1 до 99. Нажмите Enter. 
-        При неправильном вводе, по умолчанию значения: X - 39, Y - 32.
-        2. Введите имя первого игрока. Нажмите мышку или Enter.
-        3. Введите имя второго игрока. Нажмите мышку или Enter.
-        Максимальная длина имени - 10 символов.
-        Первым ходит первый игрок.
+    PVP:
+        1. Enter the dimensions of the game field - numbers from 1 to 99. Press Enter. If entered incorrectly, the default values are: X - 39, Y - 32.
+        2. Enter the name of the first player. Click the mouse or press Enter.
+        3. Enter the name of the second player. Click the mouse or press Enter.
+        The maximum length of a name is 10 characters.
+        The first player moves first.
 
-    PVC - игрок против компьютера:
-        1. Введите размеры игрового поля - числа от 1 до 99. Нажмите Enter. 
-        При неправильном вводе, по умолчанию значения: X - 39, Y - 32.
-        2. Введите имя игрока. Нажмите мышку или Enter.
-        Максимальная длина имени - 10 символов
-        3. Выберите режим компьютера. Нажмите Enter.
-        По умолчанию - слабый.
-        4. Выберите, кто будет ходить первым.
-        По умолчанию - игрок.
+    PVC:
+        1. Enter the dimensions of the game field - numbers from 1 to 99. Press Enter. If entered incorrectly, the default values are: X - 39, Y - 32.
+        2. Enter the player's name. Click the mouse or press Enter.
+        The maximum name length is 10 characters.
+        3. Choose the computer mode. Press Enter.
+        The default is weak.
+        4. Choose who will move first.
+        By default - the player.
 
-    Таблица рекордов - выводится таблица рекордов.
-        В таблицу попадают люди-победители из режимов PVP и PVC. Для выхода нажмите любую клавишу.
+    Record Table - displays the record table.
+    The table includes human winners from PVP and PVC modes.
+    Press any key to exit.
 
-    Песочница - режим, в котором можно неограниченно ставить точки двух цветов.
-    Используется для проверки механики.
-        1.  Введите размеры игрового поля - числа от 1 до 99. Нажмите Enter. 
-        При неправильном вводе, по умолчанию значения: X - 39, Y - 32.
+    Sandbox - a mode where you can endlessly place dots of two colors.
+    Used for checking mechanics.
+    Enter the dimensions of the game field - numbers from 1 to 99. Press Enter.
+    If entered incorrectly, the default values are: X - 39, Y - 32.
 
-    Выход - выход.
+    After the match, the result is displayed. Press any key to exit.
 
-    После матча показывается результат. Для выхода нажмите любую клавишу.
+Controls:
 
-Управление:
+    PVP and PVC:
+    Left click - place a dot.
 
-    PVP и PVC:
-        Левая кнопка - поставить точку.
+    Sandbox:
+        Left click - place a blue dot.
+        Right click - place a red dot.
 
-    Песочница:
-        Левая кнопка - поставить синию точку.
-        Правая кнопка - поставить красную точку.
-
-    Общие:
-        q - досрочный выход из матча. Выйгрывает тот, у кого больше очков.
+    General:
+        q - early exit from the match. The one with more points wins.
         u - Undo.
         r - Redo.
 
-Файл properties:
-    BLOCK_SIZE - расстояние между линиями
-    GAP - пустое место по краям поля
+Properties file:
+    BLOCK_SIZE - distance between lines.
+    GAP - empty space around the edges of the field.
 
-    UP_LENGTH - высота верхнего табло. Менять, если по каким-то причинам не влезает текст.
+    UP_LENGTH - height of the top scoreboard. Change if the text doesn't fit for some reason.
 
-    DEFENCE_PRIORITY - Приоритет защиты для умного компьютера.
-    ATTACK_PRIORITY - Приоритет атаки для умного компьютера.
-    CHECK_AREA - Размер зоны, в которой умный компьютер ходит. С увеличением экспоненциально возврастает время отклика.
+    DEFENCE_PRIORITY - Defense priority for the smart computer.
+    ATTACK_PRIORITY - Attack priority for the smart computer.
+    CHECK_AREA - Size of the area where the smart computer moves. Response time increases exponentially with size.

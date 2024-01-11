@@ -17,13 +17,13 @@ RED_PLAYER = 1
 
 def ask_text(ask: str, max_len: int = 10):
     """
-    Спрашивает текстовые данные.
+    Asks for textual data.
 
     Args:
-        ask (str): Вопрос.
+        ask (str): Question.
 
     Returns:
-        str: Ответ.
+        str: Response.
     """
     screen = pygame.display.set_mode([600, 75], depth=12, vsync=1)
     courier = pygame.font.SysFont('courier', 25)
@@ -63,17 +63,17 @@ def ask_text(ask: str, max_len: int = 10):
 
 def ask_binary(ask: str, text1: str, text2: str):
     """
-    Выбор между 2 вариантов.
+    Choice between 2 options.
 
     Args:
-        ask (str): Вопрос.
-        text1 (str): 1 вариант.
-        text2 (str): 2 вариант.
+        ask (str): Question.
+        text1 (str): 1st option.
+        text2 (str): 2nd option.
 
     Returns:
         int:
-        0 - 1 вариант
-        1 - 2 вариант
+        0 - 1st option
+        1 - 2nd option
     """
     screen = pygame.display.set_mode((500, 100), depth=12, vsync=1)
     courier = pygame.font.SysFont('courier', 25)
@@ -125,7 +125,7 @@ def ask_binary(ask: str, text1: str, text2: str):
 
 def ask_size():
     """
-    Запрашивает размер поля.
+    Requests the field dimensions.
     """
     screen = pygame.display.set_mode((500, 100), depth=12, vsync=1)
     courier = pygame.font.SysFont('courier', 25)
@@ -140,7 +140,7 @@ def ask_size():
     active1 = False
     active2 = False
 
-    ask = "Введите размер поля"
+    ask = "Enter the size of the field."
     text1 = ""
     text2 = ""
 
@@ -199,18 +199,18 @@ def ask_size():
 
 def start_game_in_pvp_mode(x: int, y: int):
     """
-    Запускает игру в PVP.
+    Starts the game in PVP mode.
 
     Args:
-        x (int): Количество точек по ОХ.
-        y (int): Количество точек по ОУ.
+        x (int): Number of points along the X-axis.
+        y (int): Number of points along the Y-axis.
     """
-    blue_player_name = ask_text("Введите имя 1 игрока:")
+    blue_player_name = ask_text("Enter the name of player 1:")
     if not blue_player_name:
-        blue_player_name = "Игрок 1"
-    red_player_name = ask_text("Введите имя 2 игрока:")
+        blue_player_name = "Player 1"
+    red_player_name = ask_text("Enter the name of player 2:")
     if not red_player_name:
-        red_player_name = "Игрок 2"
+        red_player_name = "Player 2"
 
     game = Game(
         linesX=x, linesY=y,
@@ -236,18 +236,18 @@ def start_game_in_pvp_mode(x: int, y: int):
 
 def start_game_in_pvc_mode(x: int, y: int):
     """
-    Запускает игру в PVC.
+    Starts game in PVC mode.
 
     Args:
-        x (int): Количество точек по ОХ.
-        y (int): Количество точек по ОУ.
+        x (int): Number of points along the X-axis.
+        y (int): Number of points along the Y-axis.
     """
-    player_name = ask_text("Введите имя игрока:")
+    player_name = ask_text("Enter the name of the player:")
     if not player_name:
-        player_name = "Игрок"
+        player_name = "Player"
 
-    level = ask_binary("Выберите уровень компьютера", "Глупый", "Умный")
-    is_computer_first = ask_binary("Кто ходит первым?", "Игрок", "Компьютер")
+    level = ask_binary("Choose the computer level.", "Weak", "Strong")
+    is_computer_first = ask_binary("Who moves first?", "Player", "Computer")
 
     computer = Computer(level)
     names = (player_name, "Computer")
@@ -279,30 +279,30 @@ def start_game_in_pvc_mode(x: int, y: int):
 
 def start_game_in_sandbox_mode(x: int, y: int):
     """
-    Запускает игру в SANDBOX.
+    Starts game in SANDBOX mode.
 
     Args:
-        x (int): Количество точек по ОХ.
-        y (int): Количество точек по ОУ.
+        x (int): Number of points along the X-axis.
+        y (int): Number of points along the Y-axis.
     """
     game = Game(
         linesX=x, linesY=y,
         game_mode="SB")
     score = game.start()
-    show_result(score, "Синие", "Красные")
+    show_result(score, "Blue", "Red")
 
 
 def start_game_in_online_mode():
     """
-    Запускает игру в SANDBOX.
+    Starts game in ONLINE mode.
 
     Args:
-        x (int): Количество точек по ОХ.
-        y (int): Количество точек по ОУ.
+        x (int): Number of points along the X-axis.
+        y (int): Number of points along the Y-axis.
     """
-    type = ask_binary("Выберите свою роль",
-                      "Хост",
-                      "Игрок")
+    type = ask_binary("Choose your role.",
+                      "Host",
+                      "Player")
     if type == 0:
         ip = socket.gethostbyname(socket.gethostname())
         sock = socket.socket()
@@ -312,14 +312,14 @@ def start_game_in_online_mode():
         sock.listen(1)
         sc, addr = sock.accept()
 
-        name_host = ask_text("Введите имя")
+        name_host = ask_text("Enter the name")
         sc.send(bytes(name_host.encode()))
-        show_text("Ждите ответа игрока")
+        show_text("Waiting for the response")
         name_player = str(sc.recv(1024).decode())
 
-        turn = ask_binary("Кто ходит первым?",
-                          "Хост",
-                          "Игрок")
+        turn = ask_binary("Who moves first?",
+                          "Host",
+                          "Player")
         sc.send(bytes(str(turn).encode()))
 
         x, y = ask_size()
@@ -334,16 +334,16 @@ def start_game_in_online_mode():
         show_result(score, name_host, name_player)
     else:
         sc = socket.socket()
-        ip = ask_text("Введите ip хоста", 15)
-        port = int(ask_text("Введите port хоста", 5))
+        ip = ask_text("Enter IP of the host", 15)
+        port = int(ask_text("Enter port of the host", 5))
         sc.connect((ip, port))
 
-        show_text("Ждите ответа хоста")
+        show_text("Wait for the response")
         name_host = str(sc.recv(1024).decode())
-        name_player = ask_text("Введите имя")
+        name_player = ask_text("Enter name")
         sc.send(bytes(name_player.encode()))
 
-        show_text("Ждите ответа хоста")
+        show_text("Wait for the response")
         turn = int(str(sc.recv(1024).decode()))
 
         x = int(str(sc.recv(1024).decode()))
@@ -376,12 +376,10 @@ def start_game(game_mode):
 
 def show_text(text: str):
     """
-    Вывод результатов после игры.
+    Print text
 
     Args:
-        score ((int, int)): Счёт.
-        name_1 (str): Имя 1 игрока.
-        name_2 (str): Имя 2 игрока.
+        text (str): Text.
     """
     screen = pygame.display.set_mode([500, 40], depth=12, vsync=1)
     courier = pygame.font.SysFont('courier', 25)
@@ -392,12 +390,12 @@ def show_text(text: str):
 
 def show_result(score: tuple, name_1: str, name_2: str):
     """
-    Вывод результатов после игры.
+    Display results after the game.
 
     Args:
-        score ((int, int)): Счёт.
-        name_1 (str): Имя 1 игрока.
-        name_2 (str): Имя 2 игрока.
+        score ((int, int)): Score.
+        name_1 (str): 1st player name.
+        name_2 (str): 2nd player name.
     """
     screen = pygame.display.set_mode([500, 75], depth=12, vsync=1)
     while True:
@@ -422,13 +420,13 @@ def show_result(score: tuple, name_1: str, name_2: str):
 
 def write_record(name: str, score: int, x: int, y: int):
     """
-    Записывает результат в таблицу рекордов.
+    Records the result in the record table.
 
     Args:
-        name (str): _description_
-        score (int): _description_
-        x (int): _description_
-        y (int): _description_
+        name (str): Winner's name.
+        score (int): Winner's score.
+        x (int): Number of points along the X-axis.
+        y (int): Number of points along the Y-axis.
     """
     if not os.path.exists("records.txt"):
         with open("records.txt", "w", encoding='utf-8') as f:
@@ -454,7 +452,7 @@ def write_record(name: str, score: int, x: int, y: int):
 
 def show_records():
     """
-    Выводит таблицу рекордов.
+    Displays the record table.
     """
     screen = pygame.display.set_mode([1000, 310], depth=12, vsync=1)
     courier = pygame.font.SysFont('courier', 25)
@@ -467,12 +465,12 @@ def show_records():
             if len(r) < 4:
                 continue
             name = ' '.join(r[:-3])
-            size = f"{r[-2]} на {r[-1][:-1]}"
-            text = f"{name} набрал {r[-3]} очков на поле размера {size}"
+            size = f"{r[-2]} by {r[-1][:-1]}"
+            text = f"{name} scored {r[-3]} point on the field with {size} size"
             text = courier.render(text, 0, WHITE)
             texts.append(text)
     if len(texts) == 0:
-        text = "Нет записей"
+        text = "No records"
         text = courier.render(text, 0, WHITE)
         texts.append(text)
     while True:
@@ -493,21 +491,21 @@ def show_records():
 def start():
     screen = build_menu()
     menu = pygame_menu.Menu(
-        "Меню", 400, 400,
+        "Menu", 400, 400,
         theme=pygame_menu.themes.THEME_BLUE)
     menu.add.button('PVP', lambda: start_game("PVP"))
     menu.add.button('PVC', lambda: start_game("PVC"))
     menu.add.button('Online', lambda: start_game("ONLINE"))
-    menu.add.button('Таблица рекордов', show_records)
-    menu.add.button('Песочница', lambda: start_game("SB"))
-    menu.add.button('Выход', pygame_menu.events.EXIT)
-    menu.set_title("Точки")
+    menu.add.button('Record table', show_records)
+    menu.add.button('Sandbox', lambda: start_game("SB"))
+    menu.add.button('Exit', pygame_menu.events.EXIT)
+    menu.set_title("Dots")
     menu.mainloop(screen)
 
 
 def build_menu():
     pygame.init()
-    pygame.display.set_caption("Точки")
+    pygame.display.set_caption("Dots")
     return pygame.display.set_mode([400, 400], depth=12, vsync=1)
 
 

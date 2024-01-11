@@ -15,10 +15,10 @@ LIGHT_GRAY = (180, 180, 180)
 
 def draw_window(screen, size: tuple):
     """
-    Рисует окно и верхнее меню.
+    Draws the window and the top menu.
 
     Args:
-        size (int, int): Размер окна.
+        size (int, int): Window size.
     """
     screen.fill(WHITE)
     pygame.draw.rect(
@@ -28,11 +28,11 @@ def draw_window(screen, size: tuple):
 
 def draw_polygon(screen, color: tuple, polygon: list):
     """
-    Рисует многоугольник.
+    Draws polygon
 
     Args:
-        color: Цвет.
-        polygon (list(int, int)): Массив координат точек.
+        color: Color.
+        polygon (list(int, int)): Dots coordinates list.
     """
     npolygon = []
     for dot in polygon:
@@ -45,11 +45,11 @@ def draw_polygon(screen, color: tuple, polygon: list):
 
 def draw_dot(screen, color: tuple, pos: tuple):
     """
-    Рисует точку.
+    Draws dot.
 
     Args:
-        color: Цвет.
-        pos (int, int): Координаты точки.
+        color: Color.
+        pos (int, int): Coordinates.
     """
     x, y = pos
     xc = properties.GAP + x * properties.BLOCK_SIZE
@@ -59,12 +59,12 @@ def draw_dot(screen, color: tuple, pos: tuple):
 
 def draw_vertical_line(screen, color: tuple, x: int, linesY: int):
     """
-    Рисует вертикальную линию.
+    Draws vertical line
 
     Args:
-        color: Цвет.
-        x (int): Координата по OX.
-        linesY (int): Количество линий по ОY.
+        color: Color.
+        x (int): X-axis coordinate.
+        linesY (int): Amount of lines by Y-axis.
     """
     xb = properties.GAP + x * properties.BLOCK_SIZE
     yb = properties.GAP + properties.UP_LENGTH
@@ -76,12 +76,12 @@ def draw_vertical_line(screen, color: tuple, x: int, linesY: int):
 
 def draw_horizontal_line(screen, color: tuple, y: int, linesX: int):
     """
-    Рисует горизонтальную линию.
+    Draws horizontal line.
 
     Args:
-        color: Цвет.
-        y (int): Координата по OY.
-        linesX (int): Количество линий по ОX.
+        color: Color.
+        y (int): Y-axis coordinate.
+        linesX (int): Amount of lines by X-axis.
     """
     xb = properties.GAP
     yb = properties.GAP + properties.UP_LENGTH + y * properties.BLOCK_SIZE
@@ -92,19 +92,19 @@ def draw_horizontal_line(screen, color: tuple, y: int, linesX: int):
 
 def draw_text(screen, names, score, linesX, game_mode):
     """
-    Рисует текст в верхнем меню.
+    Draws text in the top menu.
 
     Args:
-        names (str, str): Имена игроков.
-        score (int, int): Счёт игроков.
-        linesX (int): Количество линий по ОX.
-        game_mode (int): Режим игры.
+        names (str, str): Names.
+        score (int, int): Score.
+        linesX (int): Amount of lines by X-axis.
+        game_mode (int): Game mode.
     """
     k = linesX / 20
     courier = pygame.font.SysFont('courier', int(25 * k))
     text_score_1 = courier.render(f"{names[0]}: {score[0]}", 0, WHITE)
     text_score_2 = courier.render(f"{names[1]}: {score[1]}", 0, WHITE)
-    text_mode = courier.render(f"Режим: {game_mode}", 0, WHITE)
+    text_mode = courier.render(f"Mode: {game_mode}", 0, WHITE)
     screen.blit(text_score_1, (20, 50))
     screen.blit(text_score_2, (50 + int(300 * k), 50))
     screen.blit(text_mode, (20, 10))
@@ -120,21 +120,20 @@ def draw_env(
     score: tuple,
         names: tuple):
     """
-    Рисует всю игру.
+    Draws the whole game.
 
     Args:
-        size (tuple): Размер окна.
-        pos (tuple): Точка курсора.
-        linesX (int): Количество точек по ОХ.
-        linesY (int): Количество точек по ОY.
-        game_mode (int): Режим игры.
-        turn (int): Чей ход.
-        dots (list((int, int))): Список активных точек.
-        occupied_dots (list((int, int))): Список захваченных точек.
-        polygons (list(tuple, list((int, int)))): Список многоугольников
-        Цвет и массив точек.
-        score (int, int): Счёт игроков.
-        names (str, str): Имена игроков.
+        size (tuple): Window size.
+        pos (tuple): Cursor position.
+        linesX (int): Number of points along the X-axis.
+        linesY (int): Number of points along the Y-axis.
+        game_mode (int): Game mode.
+        turn (int): Whose turn it is.
+        dots (list((int, int))): List of active dots.
+        occupied_dots (list((int, int))): List of captured dots.
+        polygons (list(tuple, list((int, int)))): List of polygons with color and array of points.
+        score (int, int): Players' score.
+        names (str, str): Players' names.
     """
     draw_window(screen, size)
     draw_text(screen, names, score, linesX, game_mode)
